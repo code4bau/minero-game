@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Minero: FSM y Cinemática Ajustada</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div id="gameWrapper">
+    <div id="hud">
+      <div class="flex-row">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span>HP:</span>
+          <div id="hpContainer">
+            <div id="hpBar"></div>
+          </div>
+        </div>
+        <span class="dist">META: <span id="distText">0</span> / 1500m</span>
+      </div>
+      <div class="flex-row">
+        <span class="gold">ORO: <span id="goldText">0</span> / 20</span>
+      </div>
+    </div>
+
+    <div id="startMenu" class="overlay">
+      <div class="title">EXTRACCIÓN PROFUNDA</div>
+      <div class="subtitle">Usa [A] y [D] para evadir. [ESPACIO] para saltar.<br>Recoge 20 de oro y sobrevive 1500m.
+      </div>
+      <button onclick="startGame()">INICIAR PROTOCOLO</button>
+    </div>
+
+    <div id="gameOverMenu" class="overlay">
+      <div id="gameOverReason" class="fail-text">SISTEMAS DESTRUIDOS</div>
+      <div class="subtitle" id="finalStats">Oro: 0 | Distancia: 0m</div>
+      <button onclick="startGame()" style="background: #2196f3; box-shadow: 0 5px 0 #0b7dda;">REINICIAR SISTEMA</button>
+    </div>
+
+    <canvas id="gameCanvas" width="600" height="800"></canvas>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
