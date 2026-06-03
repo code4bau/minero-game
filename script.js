@@ -407,9 +407,11 @@ function gameLoop() {
     frameCount++; requestAnimationFrame(gameLoop);
 }
 
-// Registro de un Service Worker vacío para cumplir con los criterios PWA de instalación de Chrome/Android
+// REGISTRO DEL SERVICE WORKER EXTERNO
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmaXRjaCcsIGU9PntlLmNvc3BvbmRXaXRoKGZldGNoKGUucmVxdWVzdCkpO30pOw==', { scope: './' }).catch(() => { });
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => { });
+    });
 }
 
 // Inicialización
