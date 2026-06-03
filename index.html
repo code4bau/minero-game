@@ -5,42 +5,74 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Minero: FSM y Cinemática Ajustada</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
   <div id="gameWrapper">
-    <div id="hud">
-      <div class="flex-row">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span>HP:</span>
-          <div id="hpContainer">
-            <div id="hpBar"></div>
-          </div>
-        </div>
-        <span class="dist">META: <span id="distText">0</span> / 1500m</span>
+
+    <div id="startMenu" class="overlay">
+      <div class="main-title-container">
+        <h1 class="game-name">DEEP CAVERN</h1>
+        <div class="game-subtitle">Tactical Extraction</div>
       </div>
-      <div class="flex-row">
-        <span class="gold">ORO: <span id="goldText">0</span> / 20</span>
+
+      <div class="splash-frame">
+        <div class="corner top-left"></div>
+        <div class="corner top-right"></div>
+        <div class="corner bottom-left"></div>
+        <div class="corner bottom-right"></div>
+
+        <div class="terminal-text">
+          <span style="color: var(--primary)">> SISTEMA:</span> Nanotraje MK-IV Calibrado.<br>
+          <span style="color: var(--primary)">> MISIÓN:</span> Recuperar 15 Oz de Oro.<br>
+          <span style="color: var(--primary)">> PELIGRO:</span> Colapso estructural inminente.<br><br>
+          Moverse: <span style="color: #fff">[A] [D] / FLECHAS</span><br>
+          Impulso: <span style="color: #fff">[ESPACIO]</span>
+        </div>
+
+        <button class="btn-start" onclick="startGame()">Iniciar Inmersión</button>
+
+        <div class="status-bar">
+          <span>FW_VER: 2.0.4_RELOADED</span>
+          <span>SYNC_COORDS: 34.89 / -12.04</span>
+        </div>
       </div>
     </div>
 
-    <div id="startMenu" class="overlay">
-      <div class="title">EXTRACCIÓN PROFUNDA</div>
-      <div class="subtitle">Usa [A] y [D] para evadir. [ESPACIO] para saltar.<br>Recoge 20 de oro y sobrevive 1500m.
+    <div id="hud">
+      <div style="display: flex; justify-content: space-between;">
+        <div class="hud-card" style="width: 180px;">
+          <div style="font-size: 10px; color: var(--primary);">ESTADO DEL TRAJE</div>
+          <div id="hpText" style="font-size: 18px; font-weight: bold;">100%</div>
+          <div class="hp-bar-bg">
+            <div id="hpBar" class="hp-bar-fill"></div>
+          </div>
+        </div>
+        <div class="hud-card" style="text-align: right;">
+          <div style="font-size: 10px; color: var(--primary);">PROFUNDIDAD</div>
+          <div style="font-size: 18px; font-weight: bold;"><span id="distText">0</span>m</div>
+        </div>
       </div>
-      <button onclick="startGame()">INICIAR PROTOCOLO</button>
+      <div class="hud-card" style="width: fit-content; margin: 0 auto;">
+        <div style="font-size: 10px; color: var(--accent); text-align: center;">CUOTA DE ORO</div>
+        <div style="font-size: 22px; font-weight: bold; color: var(--accent);"><span id="goldText">0</span> / 15 Oz
+        </div>
+      </div>
     </div>
 
     <div id="gameOverMenu" class="overlay">
-      <div id="gameOverReason" class="fail-text">SISTEMAS DESTRUIDOS</div>
-      <div class="subtitle" id="finalStats">Oro: 0 | Distancia: 0m</div>
-      <button onclick="startGame()" style="background: #2196f3; box-shadow: 0 5px 0 #0b7dda;">REINICIAR SISTEMA</button>
+      <div class="splash-frame" style="text-align: center;">
+        <h2 id="gameOverReason" style="font-family: Orbitron; color: #ff3c3c; letter-spacing: 2px;">MISIÓN ABORTADA</h2>
+        <div id="finalStats" style="margin: 20px 0; color: #8da4be; font-size: 14px; line-height: 2;"></div>
+        <button class="btn-start" onclick="startGame()">Reiniciar Unidad</button>
+      </div>
     </div>
 
     <canvas id="gameCanvas" width="600" height="800"></canvas>
   </div>
-
   <script src="script.js"></script>
 </body>
 
