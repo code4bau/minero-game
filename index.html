@@ -5,15 +5,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>DEEP CAVERN: Tactical Extraction</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Deep Cavern">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest"
+    href="data:application/json;base64,ewogICJuYW1lIjogIkRlZXAgQ2F2ZXJuOiBUYWN0aWNhbCBFeHRyYWN0aW9uIiwKICAic2hvcnRfbmFtZSI6ICJEZWVwIENhdmVybiIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJmdWxsc2NyZWVuIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMDAwMDAwIiwKICAidGhlbWVfY29sb3IiOiAiIzAwZjBmZiIsCiAgIm9yaWVudGF0aW9uIjogInBvcnRyYWl0Igp9">
 </head>
 
 <body>
   <div id="gameWrapper">
 
-    <!-- PANTALLA DE INICIO -->
     <div id="startMenu" class="overlay">
       <div class="main-title-container">
         <h1 class="game-name">DEEP CAVERN</h1>
@@ -27,23 +31,23 @@
         <div class="corner bottom-right"></div>
 
         <div class="terminal-text">
-          <span style="color: var(--primary)">> SISTEMA:</span> Nanotraje MK-IV Calibrado.<br>
-          <span style="color: var(--primary)">> MISIÓN:</span> Recuperar 15 Oz de Oro.<br>
-          <span style="color: var(--primary)">> PELIGRO:</span> Colapso estructural detectado.<br><br>
-          Desplazamiento: <span style="color: #fff">[A] [D] / FLECHAS</span><br>
-          Propulsión Vertical: <span style="color: #fff">[ESPACIO]</span>
+          <span style="color: var(--primary)">> SISTEMA:</span> Nanotraje MK-IV Activo.<br>
+          <span style="color: var(--primary)">> CUOTA:</span> Extraer 15 Oz de Mineral.<br><br>
+          <strong>CONTROLES MÓVILES:</strong><br>
+          • <span style="color: #fff">Deslizar izquierda / derecha</span> para cambiar carril.<br>
+          • <span style="color: #fff">Deslizar hacia arriba</span> para saltar.<br><br>
+          <strong>CONTROLES PC:</strong> [A] [D] / [ESPACIO]
         </div>
 
         <button class="btn-start" onclick="startGame()">Iniciar Inmersión</button>
 
         <div class="status-bar">
-          <span>FW_VER: 2.1.0_PROD</span>
-          <span>SYNC_COORDS: 34.89 / -12.04</span>
+          <span>SYSTEM: MOBILE_READY</span>
+          <span>INPUT: SWIPE_DETECTION</span>
         </div>
       </div>
     </div>
 
-    <!-- HUD -->
     <div id="hud">
       <div class="hud-grid">
         <div class="hud-card">
@@ -61,7 +65,7 @@
         </div>
         <div class="hud-card" style="grid-column: span 2;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span class="hud-label">Cuota de Extracción Requerida</span>
+            <span class="hud-label">Cuota de Extracción</span>
             <span class="hud-value gold-glow"><span id="goldText" style="color:var(--accent);">0</span><span
                 class="unit" style="color:var(--accent); opacity:0.8;"> / 15 Oz</span></span>
           </div>
@@ -69,18 +73,12 @@
       </div>
     </div>
 
-    <!-- ZONAS TÁCTILES MÓVILES -->
-    <div id="mobileControls">
-      <div class="touch-zone" id="touchLeft"></div>
-      <div class="touch-zone" id="touchCenter"></div>
-      <div class="touch-zone" id="touchRight"></div>
-    </div>
-
-    <!-- GAME OVER -->
     <div id="gameOverMenu" class="overlay">
       <div class="splash-frame" style="text-align: center;">
-        <div id="gameOverReason" class="fail-text">COLAPSO DE LA ESTRUCTURA</div>
-        <div id="finalStats" style="margin: 20px 0; color: #8da4be; font-size: 14px; line-height: 1.8;"></div>
+        <div id="gameOverReason"
+          style="color: var(--danger); font-family: 'Orbitron'; font-weight: 900; font-size: 22px; margin-bottom: 15px;">
+          MISIÓN ABORTADA</div>
+        <div id="finalStats" style="margin: 20px 0; color: #8da4be; font-size: 13px; line-height: 1.8;"></div>
         <button class="btn-start" onclick="startGame()">Reiniciar Unidad</button>
       </div>
     </div>
