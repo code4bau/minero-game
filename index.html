@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Minero: FSM y Cinemática Ajustada</title>
+  <title>DEEP CAVERN: Tactical Extraction</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -13,6 +13,7 @@
 <body>
   <div id="gameWrapper">
 
+    <!-- PANTALLA DE INICIO -->
     <div id="startMenu" class="overlay">
       <div class="main-title-container">
         <h1 class="game-name">DEEP CAVERN</h1>
@@ -28,51 +29,65 @@
         <div class="terminal-text">
           <span style="color: var(--primary)">> SISTEMA:</span> Nanotraje MK-IV Calibrado.<br>
           <span style="color: var(--primary)">> MISIÓN:</span> Recuperar 15 Oz de Oro.<br>
-          <span style="color: var(--primary)">> PELIGRO:</span> Colapso estructural inminente.<br><br>
-          Moverse: <span style="color: #fff">[A] [D] / FLECHAS</span><br>
-          Impulso: <span style="color: #fff">[ESPACIO]</span>
+          <span style="color: var(--primary)">> PELIGRO:</span> Colapso estructural detectado.<br><br>
+          Desplazamiento: <span style="color: #fff">[A] [D] / FLECHAS</span><br>
+          Propulsión Vertical: <span style="color: #fff">[ESPACIO]</span>
         </div>
 
         <button class="btn-start" onclick="startGame()">Iniciar Inmersión</button>
 
         <div class="status-bar">
-          <span>FW_VER: 2.0.4_RELOADED</span>
+          <span>FW_VER: 2.1.0_PROD</span>
           <span>SYNC_COORDS: 34.89 / -12.04</span>
         </div>
       </div>
     </div>
 
+    <!-- HUD -->
     <div id="hud">
-      <div style="display: flex; justify-content: space-between;">
-        <div class="hud-card" style="width: 180px;">
-          <div style="font-size: 10px; color: var(--primary);">ESTADO DEL TRAJE</div>
-          <div id="hpText" style="font-size: 18px; font-weight: bold;">100%</div>
-          <div class="hp-bar-bg">
-            <div id="hpBar" class="hp-bar-fill"></div>
+      <div class="hud-grid">
+        <div class="hud-card">
+          <div class="hud-label">Estructura del Traje</div>
+          <div class="hud-value" id="hpText">100%</div>
+          <div class="hp-container">
+            <div id="hpBar" class="hp-bar"></div>
           </div>
         </div>
         <div class="hud-card" style="text-align: right;">
-          <div style="font-size: 10px; color: var(--primary);">PROFUNDIDAD</div>
-          <div style="font-size: 18px; font-weight: bold;"><span id="distText">0</span>m</div>
+          <div class="hud-label">Avance Estructural</div>
+          <div class="hud-value" style="justify-content: flex-end;">
+            <span id="distText">0</span> <span class="unit">/ 2500m</span>
+          </div>
         </div>
-      </div>
-      <div class="hud-card" style="width: fit-content; margin: 0 auto;">
-        <div style="font-size: 10px; color: var(--accent); text-align: center;">CUOTA DE ORO</div>
-        <div style="font-size: 22px; font-weight: bold; color: var(--accent);"><span id="goldText">0</span> / 15 Oz
+        <div class="hud-card" style="grid-column: span 2;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="hud-label">Cuota de Extracción Requerida</span>
+            <span class="hud-value gold-glow"><span id="goldText" style="color:var(--accent);">0</span><span
+                class="unit" style="color:var(--accent); opacity:0.8;"> / 15 Oz</span></span>
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- ZONAS TÁCTILES MÓVILES -->
+    <div id="mobileControls">
+      <div class="touch-zone" id="touchLeft"></div>
+      <div class="touch-zone" id="touchCenter"></div>
+      <div class="touch-zone" id="touchRight"></div>
+    </div>
+
+    <!-- GAME OVER -->
     <div id="gameOverMenu" class="overlay">
       <div class="splash-frame" style="text-align: center;">
-        <h2 id="gameOverReason" style="font-family: Orbitron; color: #ff3c3c; letter-spacing: 2px;">MISIÓN ABORTADA</h2>
-        <div id="finalStats" style="margin: 20px 0; color: #8da4be; font-size: 14px; line-height: 2;"></div>
+        <div id="gameOverReason" class="fail-text">COLAPSO DE LA ESTRUCTURA</div>
+        <div id="finalStats" style="margin: 20px 0; color: #8da4be; font-size: 14px; line-height: 1.8;"></div>
         <button class="btn-start" onclick="startGame()">Reiniciar Unidad</button>
       </div>
     </div>
 
     <canvas id="gameCanvas" width="600" height="800"></canvas>
   </div>
+
   <script src="script.js"></script>
 </body>
 
