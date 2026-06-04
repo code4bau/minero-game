@@ -3,16 +3,19 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>DEEP CAVERN: Tactical Extraction</title>
+
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Deep Cavern">
+  <link rel="manifest" href="manifest.json">
+
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
 
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -31,43 +34,75 @@
         <div class="corner bottom-right"></div>
 
         <div class="terminal-text">
-          <span style="color: var(--primary)">> SISTEMA:</span> Nanotraje MK-IV Activo.<br>
-          <span style="color: var(--primary)">> CUOTA:</span> Extraer 15 Oz de Mineral.<br><br>
-          <strong>CONTROLES MÓVILES:</strong><br>
-          • <span style="color: #fff">Deslizar izquierda / derecha</span> para cambiar carril.<br>
-          • <span style="color: #fff">Deslizar hacia arriba</span> para saltar.<br><br>
-          <strong>CONTROLES PC:</strong> [A] [D] / [ESPACIO]
+          <span style="color: var(--primary)">> SISTEMA:</span> Nanotraje MK-IV Sincronizado.<br>
+          <span style="color: var(--primary)">> OPERACIÓN:</span> Profundidad de Red: 5000m.<br>
+          <span style="color: var(--primary)">> PROTOCOLO:</span> Recolectar cuota mínima para retorno.<br><br>
+          Gesto <span style="color: #fff">Swipe Lateral</span> para carriles.<br>
+          Gesto <span style="color: #fff">Swipe Arriba</span> para propulsión.
         </div>
 
         <button class="btn-start" onclick="startGame()">Iniciar Inmersión</button>
+        <button class="btn-secondary" onclick="openShop()">Acceder a la Armería</button>
 
-        <div class="status-bar">
-          <span>SYSTEM: MOBILE_READY</span>
-          <span>INPUT: SWIPE_DETECTION</span>
+        <div class="status-bar"><span>BIOMAS: 3 CONFIGURADOS</span><span>Z-DEPTH: 5000m</span></div>
+      </div>
+    </div>
+
+    <div id="shopMenu" class="overlay">
+      <div class="main-title-container" style="margin-bottom:15px;">
+        <h2 style="font-family:'Orbitron'; font-size:24px; letter-spacing:2px; margin:0;">ARMERÍA CENTRAL</h2>
+        <div class="game-subtitle" style="letter-spacing:4px;">Upgrades de Ingeniería</div>
+      </div>
+
+      <div class="splash-frame">
+        <div class="corner top-left"></div>
+        <div class="corner top-right"></div>
+        <div class="corner bottom-left"></div>
+        <div class="corner bottom-right"></div>
+
+        <div class="wallet">REMANENTE EN DEPÓSITO: <span id="walletGold">0</span> Oz ORO</div>
+
+        <div class="upgrade-section">
+          <div class="upgrade-title">> Modificaciones de Hardware</div>
+
+          <div class="upgrade-row">
+            <div class="upgrade-info">Blindaje de Chasis (HP): <br><span id="hpLvlText"
+                style="color:var(--primary); font-size:11px;">Niv.1</span></div>
+            <button class="upgrade-btn" id="btnUpgradeHp" onclick="buyUpgrade('hp')">MEJORAR (5 Oz)</button>
+          </div>
+
+          <div class="upgrade-row">
+            <div class="upgrade-info">Foco de Alta Presión: <br><span id="lightLvlText"
+                style="color:var(--primary); font-size:11px;">Niv.1</span></div>
+            <button class="upgrade-btn" id="btnUpgradeLight" onclick="buyUpgrade('light')">MEJORAR (5 Oz)</button>
+          </div>
         </div>
+
+        <button class="btn-start"
+          style="background:#153350; color:var(--primary); border:1px solid var(--primary); margin-top:10px;"
+          onclick="closeShop()">Volver al Panel Principal</button>
       </div>
     </div>
 
     <div id="hud">
       <div class="hud-grid">
         <div class="hud-card">
-          <div class="hud-label">Estructura del Traje</div>
+          <div class="hud-label">Estructura Traje</div>
           <div class="hud-value" id="hpText">100%</div>
           <div class="hp-container">
             <div id="hpBar" class="hp-bar"></div>
           </div>
         </div>
         <div class="hud-card" style="text-align: right;">
-          <div class="hud-label">Avance Estructural</div>
-          <div class="hud-value" style="justify-content: flex-end;">
-            <span id="distText">0</span> <span class="unit">/ 2500m</span>
-          </div>
+          <div class="hud-label" id="lblBioma">Sector Criogénico</div>
+          <div class="hud-value" style="justify-content: flex-end;"><span id="distText">0</span> <span class="unit">/
+              5000m</span></div>
         </div>
         <div class="hud-card" style="grid-column: span 2;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span class="hud-label">Cuota de Extracción</span>
-            <span class="hud-value gold-glow"><span id="goldText" style="color:var(--accent);">0</span><span
-                class="unit" style="color:var(--accent); opacity:0.8;"> / 15 Oz</span></span>
+            <span class="hud-value gold-glow"><span id="goldText">0</span><span class="unit"
+                style="color:var(--accent); opacity:0.8;"> / 25 Oz</span></span>
           </div>
         </div>
       </div>
@@ -80,6 +115,7 @@
           MISIÓN ABORTADA</div>
         <div id="finalStats" style="margin: 20px 0; color: #8da4be; font-size: 13px; line-height: 1.8;"></div>
         <button class="btn-start" onclick="startGame()">Reiniciar Unidad</button>
+        <button class="btn-secondary" onclick="backToMenuFromGameOver()">Volver al Menú</button>
       </div>
     </div>
 
