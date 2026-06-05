@@ -5,17 +5,16 @@
   <meta charset="UTF-8">
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>DEEP CAVERN: Tactical Extraction</title>
+  <title>Misión Subterránea</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Deep Cavern">
   <link rel="manifest" href="manifest.json">
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap"
     rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
@@ -23,106 +22,131 @@
 
     <div id="startMenu" class="overlay">
       <div class="main-title-container">
-        <h1 class="game-name">DEEP CAVERN</h1>
-        <div class="game-subtitle">Tactical Extraction</div>
+        <svg class="cyber-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+          <defs>
+            <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          <polygon points="50,15 85,75 15,75" fill="none" stroke="rgba(0, 240, 255, 0.3)" stroke-width="2" />
+          <polygon points="50,22 78,70 22,70" fill="none" stroke="var(--primary)" stroke-width="3"
+            filter="url(#neon-glow)" />
+
+          <path d="M50,35 L62,48 L50,62 L38,48 Z" fill="none" stroke="var(--accent)" stroke-width="2.5"
+            filter="url(#neon-glow)" />
+          <line x1="50" y1="35" x2="50" y2="62" stroke="var(--accent)" stroke-width="1.5" opacity="0.7" />
+          <line x1="38" y1="48" x2="62" y2="48" stroke="var(--accent)" stroke-width="1.5" opacity="0.7" />
+
+          <circle cx="50" cy="15" r="2" fill="var(--primary)" />
+          <circle cx="85" cy="75" r="2" fill="var(--primary)" />
+          <circle cx="15" cy="75" r="2" fill="var(--primary)" />
+        </svg>
+        <h1 class="game-title">CAVERNA NEÓN</h1>
+        <div class="game-subtitle">Diario de Supervivencia</div>
       </div>
-
       <div class="splash-frame">
-        <div class="corner top-left"></div>
-        <div class="corner top-right"></div>
-        <div class="corner bottom-left"></div>
-        <div class="corner bottom-right"></div>
-
-        <div class="terminal-text">
-          <span style="color: var(--primary)">> SISTEMA:</span> Nanotraje MK-IV Sincronizado.<br>
-          <span style="color: var(--primary)">> OPERACIÓN:</span> Profundidad de Red: 5000m.<br>
-          <span style="color: var(--primary)">> PROTOCOLO:</span> Recolectar cuota mínima para retorno.<br><br>
-          Gesto <span style="color: #fff">Swipe Lateral</span> para carriles.<br>
-          Gesto <span style="color: #fff">Swipe Arriba</span> para propulsión.
+        <div class="terminal-box">
+          <span style="color: var(--primary)">ESTADO:</span> Minero atrapado bajo tierra.<br>
+          <span style="color: var(--primary)">MISIÓN:</span> Recolectar cristales de energía para reparar el ascensor de
+          extracción.
         </div>
+        <button class="btn-cyber" onclick="switchView('map')">Elegir Nivel</button>
+        <button class="btn-cyber-alt" onclick="switchView('shop')">Tienda de Mejoras</button>
+      </div>
+    </div>
 
-        <button class="btn-start" onclick="startGame()">Iniciar Inmersión</button>
-        <button class="btn-secondary" onclick="openShop()">Acceder a la Armería</button>
+    <div id="mapMenu" class="overlay">
+      <div class="main-title-container">
+        <h2 class="game-title">MAPA DE CUEVAS</h2>
+        <div class="game-subtitle">Sistemas Detectados</div>
+      </div>
+      <div class="splash-frame">
+        <div class="mission-list" id="misionesContenedor"></div>
+        <button class="btn-cyber-alt" onclick="switchView('main')">Volver al Inicio</button>
+      </div>
+    </div>
 
-        <div class="status-bar"><span>BIOMAS: 3 CONFIGURADOS</span><span>Z-DEPTH: 5000m</span></div>
+    <div id="briefingMenu" class="overlay">
+      <div class="main-title-container">
+        <h2 class="game-title">TRANSMISIÓN</h2>
+        <div class="game-subtitle">Registro de Audio</div>
+      </div>
+      <div class="splash-frame">
+        <div class="terminal-box typewriter-cursor" id="briefingTexto"></div>
+        <button class="btn-cyber" id="btnIniciarMision" onclick="ejecutarInmersion()">Comenzar Descenso</button>
       </div>
     </div>
 
     <div id="shopMenu" class="overlay">
-      <div class="main-title-container" style="margin-bottom:15px;">
-        <h2 style="font-family:'Orbitron'; font-size:24px; letter-spacing:2px; margin:0;">ARMERÍA CENTRAL</h2>
-        <div class="game-subtitle" style="letter-spacing:4px;">Upgrades de Ingeniería</div>
+      <div class="main-title-container">
+        <h2 class="game-title">TALLER</h2>
+        <div class="game-subtitle">Modifica tu Traje</div>
       </div>
-
       <div class="splash-frame">
-        <div class="corner top-left"></div>
-        <div class="corner top-right"></div>
-        <div class="corner bottom-left"></div>
-        <div class="corner bottom-right"></div>
-
-        <div class="wallet">REMANENTE EN DEPÓSITO: <span id="walletGold">0</span> Oz ORO</div>
-
-        <div class="upgrade-section">
-          <div class="upgrade-title">> Modificaciones de Hardware</div>
-
+        <div class="wallet-display">CRISTALES: <span id="txtWallet">0</span></div>
+        <div style="margin-bottom:20px;">
           <div class="upgrade-row">
-            <div class="upgrade-info">Blindaje de Chasis (HP): <br><span id="hpLvlText"
-                style="color:var(--primary); font-size:11px;">Niv.1</span></div>
-            <button class="upgrade-btn" id="btnUpgradeHp" onclick="buyUpgrade('hp')">MEJORAR (5 Oz)</button>
+            <div class="upgrade-info">Armadura (Vida)<br><span id="txtLvlHp">Niv.1</span></div>
+            <button class="btn-cyber-alt" style="width: auto; padding: 8px 15px;" id="btnBuyHp"
+              onclick="ejecutarUpgrade('hp')">5 U</button>
           </div>
-
           <div class="upgrade-row">
-            <div class="upgrade-info">Foco de Alta Presión: <br><span id="lightLvlText"
-                style="color:var(--primary); font-size:11px;">Niv.1</span></div>
-            <button class="upgrade-btn" id="btnUpgradeLight" onclick="buyUpgrade('light')">MEJORAR (5 Oz)</button>
+            <div class="upgrade-info">Linterna (Visión)<br><span id="txtLvlLight">Niv.1</span></div>
+            <button class="btn-cyber-alt" style="width: auto; padding: 8px 15px;" id="btnBuyLight"
+              onclick="ejecutarUpgrade('light')">5 U</button>
+          </div>
+          <div class="upgrade-row">
+            <div class="upgrade-info">Imán de Cristales<br><span id="txtLvlMagnet">Niv.1</span></div>
+            <button class="btn-cyber-alt" style="width: auto; padding: 8px 15px;" id="btnBuyMagnet"
+              onclick="ejecutarUpgrade('magnet')">5 U</button>
           </div>
         </div>
-
-        <button class="btn-start"
-          style="background:#153350; color:var(--primary); border:1px solid var(--primary); margin-top:10px;"
-          onclick="closeShop()">Volver al Panel Principal</button>
-      </div>
-    </div>
-
-    <div id="hud">
-      <div class="hud-grid">
-        <div class="hud-card">
-          <div class="hud-label">Estructura Traje</div>
-          <div class="hud-value" id="hpText">100%</div>
-          <div class="hp-container">
-            <div id="hpBar" class="hp-bar"></div>
-          </div>
-        </div>
-        <div class="hud-card" style="text-align: right;">
-          <div class="hud-label" id="lblBioma">Sector Criogénico</div>
-          <div class="hud-value" style="justify-content: flex-end;"><span id="distText">0</span> <span class="unit">/
-              5000m</span></div>
-        </div>
-        <div class="hud-card" style="grid-column: span 2;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span class="hud-label">Cuota de Extracción</span>
-            <span class="hud-value gold-glow"><span id="goldText">0</span><span class="unit"
-                style="color:var(--accent); opacity:0.8;"> / 25 Oz</span></span>
-          </div>
-        </div>
+        <button class="btn-cyber-alt" onclick="switchView('main')">Volver</button>
       </div>
     </div>
 
     <div id="gameOverMenu" class="overlay">
       <div class="splash-frame" style="text-align: center;">
         <div id="gameOverReason"
-          style="color: var(--danger); font-family: 'Orbitron'; font-weight: 900; font-size: 22px; margin-bottom: 15px;">
-          MISIÓN ABORTADA</div>
-        <div id="finalStats" style="margin: 20px 0; color: #8da4be; font-size: 13px; line-height: 1.8;"></div>
-        <button class="btn-start" onclick="startGame()">Reiniciar Unidad</button>
-        <button class="btn-secondary" onclick="backToMenuFromGameOver()">Volver al Menú</button>
+          style="font-family: 'Orbitron'; font-weight: 900; font-size: 24px; margin-bottom: 15px;">FIN DE TRANSMISIÓN
+        </div>
+        <div id="finalStats" class="terminal-box" style="margin-bottom:20px; text-align: center;"></div>
+        <button class="btn-cyber" onclick="reintentarMisionActual()">Reintentar Nivel</button>
+        <button class="btn-cyber-alt" onclick="abortarMisionAlMenu()">Volver al Mapa</button>
+      </div>
+    </div>
+
+    <div id="hud">
+      <div class="hud-grid">
+        <div class="hud-card">
+          <div class="hud-label">Armadura</div>
+          <div class="hud-value" id="hpText">100%</div>
+          <div class="hp-container">
+            <div id="hpBar" class="hp-bar"></div>
+          </div>
+        </div>
+        <div class="hud-card" style="text-align: right;">
+          <div class="hud-label" id="lblBioma">Analizando...</div>
+          <div class="hud-value" style="justify-content: flex-end;"><span id="distText">0</span> <span class="unit"
+              id="maxDistHud" style="color:var(--text-muted);">/ 5000m</span></div>
+        </div>
+        <div class="hud-card" style="grid-column: span 2;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="hud-label">Cristales Recolectados</span>
+            <span class="hud-value" style="color:var(--accent);"><span id="goldText">0</span><span class="unit"
+                style="color:var(--accent);"> / <span id="targetGoldText">15</span></span></span>
+          </div>
+        </div>
       </div>
     </div>
 
     <canvas id="gameCanvas" width="600" height="800"></canvas>
   </div>
-
-  <script src="script.js"></script>
+  <script src="js/script.js"></script>
 </body>
 
 </html>
