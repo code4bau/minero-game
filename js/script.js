@@ -2,17 +2,12 @@ const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getCont
 const views = { main: document.getElementById('startMenu'), map: document.getElementById('mapMenu'), briefing: document.getElementById('briefingMenu'), shop: document.getElementById('shopMenu'), gameover: document.getElementById('gameOverMenu'), hud: document.getElementById('hud') };
 const uiGold = document.getElementById('goldText'), uiDist = document.getElementById('distText'), uiHpBar = document.getElementById('hpBar'), uiHpText = document.getElementById('hpText'), uiTargetGold = document.getElementById('targetGoldText'), uiMaxDist = document.getElementById('maxDistHud'), goReason = document.getElementById('gameOverReason'), goStats = document.getElementById('finalStats');
 
-/* ========================================================
-   MOTOR DE AUDIO (SÍNTESIS PROCEDURAL WEB AUDIO API)
-   Cero dependencias, cero tiempos de carga.
-   ======================================================== */
+// MOTOR AUDIO PROCEDURAL
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
 const SoundEngine = {
     playTone: (freq, type, duration, vol) => {
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
         osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
         gain.gain.setValueAtTime(vol, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
@@ -25,29 +20,13 @@ const SoundEngine = {
     alert: () => { SoundEngine.playTone(400, 'square', 0.2, 0.3); setTimeout(() => SoundEngine.playTone(300, 'square', 0.3, 0.3), 200); }
 };
 
-// BASE DE DATOS DE MISIONES (NIVELES)
+// BASE DE DATOS DE CAMPANA
 const CAMPANA_MISIONES = [
     { id: 0, nombre: "NIVEL 1: Cueva de Hielo", metaDist: 2000, cuota: 10, biomaBase: "CRIO", vInicial: 15, textoStory: "Diario del día 1.\nEstoy atrapado. Hay cristales de energía azules brillando en las paredes. Si logro juntar 10 de estos cristales antes de llegar a los 2000 metros, podré reactivar la radio." },
     { id: 1, nombre: "NIVEL 2: Cañón de Lava", metaDist: 3500, cuota: 15, biomaBase: "MAGMA", vInicial: 19, textoStory: "Diario del día 3.\nEl túnel bajó hacia una zona volcánica. El traje se está sobrecalentando rápido. Necesito 15 cristales para darle energía a la refrigeración de la armadura. Tengo que ser rápido." },
-    { id: 2, nombre: "NIVEL 3: El Vacío", metaDist: 5000, cuota: 25, biomaBase: "ABISO", vInicial: 24, textoStory: "Diario del día 7.\nNo veo el fondo. Todo es oscuridad. Hay cristales puros flotando. Esta es la última bajada. Necesito 25 cristales para encender el ascensor principal y volver a la superficie." },
-    {
-        id: 3,
-        nombre: "NIVEL 4: Falla del Núcleo",
-        metaDist: 6500,
-        cuota: 30,
-        biomaBase: "MAGMA",
-        vInicial: 27,
-        textoStory: "Diario del día 11.\nEl entorno se volvió inestable. El magma se está filtrando a través de los servidores de la caverna y la armadura del traje está absorbiendo demasiada radiación. La velocidad de descenso es peligrosa. Juntá 30 cristales para sobrecargar los escudos del chasis antes de que los sistemas se bloqueen."
-    },
-    {
-        id: 4,
-        nombre: "NIVEL 5: La Ecuación Final",
-        metaDist: 8000,
-        cuota: 40,
-        biomaBase: "ABISO",
-        vInicial: 30,
-        textoStory: "Diario del día 15.\nEste es el punto de no retorno. La gravedad está alterada y la señal de radio con la estación espacial exterior se está desvaneciendo. Si logro extraer los últimos 40 cristales, podré transmitir los datos de salvación para el resto de la humanidad. Después de esto, ya no habrá forma de salir."
-    }
+    { id: 2, nombre: "NIVEL 3: El Nexo de Datos", metaDist: 5000, cuota: 25, biomaBase: "ABISO", vInicial: 24, textoStory: "Diario del día 7.\nLlegué al Nexo de Datos. No hay piedra acá abajo; las paredes son estructuras geométricas puras que titilan en la oscuridad. La linterna falla por la interferencia magnética. Descubrí que el colapso de la superficie no fue un accidente natural. Necesito 25 cristales para encender el decodificador y extraer la verdad." },
+    { id: 3, nombre: "NIVEL 4: Falla del Núcleo", metaDist: 6500, cuota: 30, biomaBase: "MAGMA", vInicial: 27, textoStory: "Diario del día 11.\nEl entorno se volvió inestable. El magma se está filtrando a través de los servidores de la caverna y la armadura del traje está absorbiendo demasiada radiación. La velocidad de descenso es peligrosa. Juntá 30 cristales para sobrecargar los escudos del chasis antes de que los sistemas se bloqueen." },
+    { id: 4, nombre: "NIVEL 5: La Ecuación Final", metaDist: 8000, cuota: 40, biomaBase: "ABISO", vInicial: 30, textoStory: "Diario del día 15.\nEste es el punto de no retorno. La gravedad está alterada y la señal de radio con la estación espacial exterior se está desvaneciendo. Si logro extraer los últimos 40 cristales, podré transmitir los datos de salvación para el resto de la humanidad. Después de esto, ya no habrá forma de salir." }
 ];
 
 const FOV = 280; const CAMERA_Y = -120; let HORIZON_Y = canvas.height * 0.45; let CENTER_X = canvas.width / 2;
@@ -71,7 +50,7 @@ const LAUNCH_PATTERNS = [
     [{ l: 1, t: 'gold', z: 0 }, { l: 0, t: 'gold', z: 100 }, { l: 2, t: 'gold', z: 200 }, { l: 1, t: 'gold', z: 300 }]
 ];
 
-// MANEJO DE MEMORIA: OBJECT POOLING
+// POOLING SYSTEM DE MEMORIA RAM
 class Entity3D {
     constructor() { this.active = false; this.lane = 0; this.x = 0; this.y = 0; this.z = 0; this.type = ''; this.baseRadius = 0; this.rotation = 0; }
     spawn(lane, type, zOffset) {
@@ -112,9 +91,7 @@ class Particle3D {
         if (this.type === 'dust') {
             this.z -= (currentState === 'MENU') ? 4 : globalSpeed;
             if (this.z < 20) { this.z = 2500 + Math.random() * 500; this.x = (Math.random() - 0.5) * 800; this.y = -100 - Math.random() * 300; }
-        } else {
-            this.lifetime--; if (this.lifetime <= 0) this.active = false;
-        }
+        } else { this.lifetime--; if (this.lifetime <= 0) this.active = false; }
     }
     draw() {
         if (!this.active) return;
@@ -133,8 +110,7 @@ function getFreeParticle() { return particlePool.find(p => !p.active); }
 function initAtmosphericDust() {
     particlePool.forEach(p => p.active = false);
     for (let i = 0; i < 45; i++) {
-        let p = getFreeParticle();
-        if (p) p.spawn((Math.random() - 0.5) * 1000, -50 - Math.random() * 400, Math.random() * 2500, 0, 0, 0, 'rgba(0, 240, 255, 0.2)', 1.5, 9999, 'dust');
+        let p = getFreeParticle(); if (p) p.spawn((Math.random() - 0.5) * 1000, -50 - Math.random() * 400, Math.random() * 2500, 0, 0, 0, 'rgba(0, 240, 255, 0.2)', 1.5, 9999, 'dust');
     }
 }
 
@@ -153,38 +129,26 @@ function spawnPatternChunk() {
     for (let i = 0; i < chunk.length; i++) { let ent = getFreeEntity(); if (ent) ent.spawn(chunk[i].l, chunk[i].t, chunk[i].z); }
 }
 
-// PERSISTENCIA E INTERFACES
+// ENLACE DE DATOS
 function loadGameData() {
-    const local = localStorage.getItem('deep_cavern_save_v2');
-    if (local) {
-        try {
-            saveData = JSON.parse(local);
-        } catch (e) { }
-    }
-
-    // VALIDACIÓN DEFENSIVA: Si la clave no existe o es inválida, se fuerza a 0
-    if (saveData.maxNivelDesbloqueado === undefined || typeof saveData.maxNivelDesbloqueado !== 'number') {
-        saveData.maxNivelDesbloqueado = 0;
-    }
-
-    updateShopUI();
-    buildMapNodes();
+    const local = localStorage.getItem('deep_cavern_save_v3');
+    if (local) { try { saveData = JSON.parse(local); } catch (e) { } }
+    if (saveData.maxNivelDesbloqueado === undefined || typeof saveData.maxNivelDesbloqueado !== 'number') saveData.maxNivelDesbloqueado = 0;
+    updateShopUI(); buildMapNodes();
 }
-function saveGameData() { localStorage.setItem('deep_cavern_save_v2', JSON.stringify(saveData)); }
+function saveGameData() { localStorage.setItem('deep_cavern_save_v3', JSON.stringify(saveData)); }
 
 function updateShopUI() {
     document.getElementById('txtWallet').innerText = saveData.gold;
     document.getElementById('txtLvlHp').innerText = `Niv.${saveData.hpLvl}`;
     document.getElementById('txtLvlLight').innerText = `Niv.${saveData.lightLvl}`;
     document.getElementById('txtLvlMagnet').innerText = `Niv.${saveData.magnetLvl}`;
-
     document.getElementById('btnBuyHp').disabled = saveData.gold < 5 || saveData.hpLvl >= 5;
     document.getElementById('btnBuyLight').disabled = saveData.gold < 5 || saveData.lightLvl >= 5;
     document.getElementById('btnBuyMagnet').disabled = saveData.gold < 5 || saveData.magnetLvl >= 5;
 }
 
 function ejecutarUpgrade(type) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
     if (saveData.gold >= 5) {
         if (type === 'hp' && saveData.hpLvl < 5) { saveData.gold -= 5; saveData.hpLvl++; }
         if (type === 'light' && saveData.lightLvl < 5) { saveData.gold -= 5; saveData.lightLvl++; }
@@ -206,26 +170,30 @@ function buildMapNodes() {
     CAMPANA_MISIONES.forEach(m => {
         const node = document.createElement('div'); const isLocked = m.id > saveData.maxNivelDesbloqueado;
         node.className = `mission-node ${isLocked ? 'locked' : ''}`;
-        node.innerHTML = `<div class="mission-meta"><div class="mission-name">${m.nombre}</div><div class="mission-target">OBJETIVO: ${m.metaDist}m | CUOTA: ${m.cuota} Cristales</div></div><div>${isLocked ? '🔒 BLOQUEADO' : '⚡ JUGAR'}</div>`;
+        node.innerHTML = `<div class="mission-meta"><div class="mission-name">${m.nombre}</div><div class="mission-target">OBJETIVO: ${m.metaDist}m | CUOTA: ${m.cuota} U</div></div><div>${isLocked ? '🔒 BLOQUEADO' : '⚡ JUGAR'}</div>`;
         if (!isLocked) { node.onclick = () => inicializarNarrativaBriefing(m.id); } contenedor.appendChild(node);
     });
 }
 
 let typewriterTimer = null;
 function inicializarNarrativaBriefing(misionId) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
     levelSelected = misionId; switchView('none'); views.briefing.style.display = 'flex';
     const txtBox = document.getElementById('briefingTexto'); txtBox.innerText = '';
     const fullText = CAMPANA_MISIONES[misionId].textoStory; let charIdx = 0;
     if (typewriterTimer) clearInterval(typewriterTimer); document.getElementById('btnIniciarMision').style.display = 'none';
     typewriterTimer = setInterval(() => {
         txtBox.innerText += fullText.charAt(charIdx); charIdx++;
-        if (charIdx % 3 === 0) SoundEngine.playTone(600, 'sine', 0.05, 0.05); // Sonido teletipo
+        if (charIdx % 3 === 0) SoundEngine.playTone(600, 'sine', 0.05, 0.05);
         if (charIdx >= fullText.length) { clearInterval(typewriterTimer); document.getElementById('btnIniciarMision').style.display = 'block'; }
-    }, 30);
+    }, 20);
 }
 
-function resizeCanvas() { const rect = canvas.getBoundingClientRect(); canvas.width = rect.width * window.devicePixelRatio; canvas.height = rect.height * window.devicePixelRatio; CENTER_X = canvas.width / 2; HORIZON_Y = canvas.height * 0.45; }
+// RESOLUCIÓN REAL ADAPTATIVA
+function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * window.devicePixelRatio; canvas.height = rect.height * window.devicePixelRatio;
+    CENTER_X = canvas.width / 2; HORIZON_Y = canvas.height * 0.45;
+}
 window.addEventListener('resize', resizeCanvas);
 
 let touchStartX = 0, touchStartY = 0;
@@ -248,6 +216,7 @@ window.addEventListener('keydown', e => {
 function triggerLaneChangeParticles() { if (player) createExplosion(player.x, player.y, player.z, 'var(--primary)', 4); }
 function project(x, y, z) { if (z <= 0) return { scale: 0, x: 0, y: 0 }; const scale = (FOV * (canvas.width / 600)) / z; return { x: CENTER_X + (x * scale), y: HORIZON_Y + ((y - CAMERA_Y) * scale), scale: scale }; }
 
+// DIBUJO GEOMÉTRICO DINÁMICO PROPORCIONAL AL ANCHO REAL DEL CANVAS
 function drawAtmosphericCave() {
     const config = BIOMAS_CONFIG[biomaActual];
     let coreGrad = ctx.createRadialGradient(CENTER_X, HORIZON_Y - 20, 5, CENTER_X, HORIZON_Y - 20, canvas.height * 0.7);
@@ -266,7 +235,12 @@ function drawAtmosphericCave() {
             ctx.strokeStyle = `rgba(${config.rgb}, ${pL.scale * 0.1})`; ctx.lineWidth = 1 * pL.scale; ctx.beginPath(); ctx.moveTo(project(-LANE_SPACING * 0.5, 0, currentZ).x, project(-LANE_SPACING * 0.5, 0, currentZ).y); ctx.lineTo(project(-LANE_SPACING * 0.5, 0, currentZ - 80).x, project(-LANE_SPACING * 0.5, 0, currentZ - 80).y); ctx.moveTo(project(LANE_SPACING * 0.5, 0, currentZ).x, project(LANE_SPACING * 0.5, 0, currentZ).y); ctx.lineTo(project(LANE_SPACING * 0.5, 0, currentZ - 80).x, project(LANE_SPACING * 0.5, 0, currentZ - 80).y); ctx.stroke();
         }
     }
-    ctx.fillStyle = '#010203'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(110, 350); ctx.lineTo(130, 520); ctx.lineTo(0, canvas.height); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(canvas.width, 0); ctx.lineTo(canvas.width - 110, 350); ctx.lineTo(canvas.width - 130, 520); ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
+
+    // REDISEÑO EN BASE PROPORCIONAL (% DEL ANCHO): Libera los bordes en móviles estrechos
+    let sideWallWidth = canvas.width * 0.18;
+    ctx.fillStyle = '#010203';
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(sideWallWidth, HORIZON_Y); ctx.lineTo(sideWallWidth * 1.2, canvas.height); ctx.lineTo(0, canvas.height); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(canvas.width, 0); ctx.lineTo(canvas.width - sideWallWidth, HORIZON_Y); ctx.lineTo(canvas.width - (sideWallWidth * 1.2), canvas.height); ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
 }
 
 class Miner {
@@ -276,7 +250,7 @@ class Miner {
         this.maxHp = 100 + (saveData.hpLvl - 1) * 25; this.hp = this.maxHp; this.iFrames = 0;
         this.tilt = 0; this.bobAngle = 0; this.scaleX = 1; this.scaleY = 1;
         this.lightMaxRadius = 300 + (saveData.lightLvl - 1) * 60;
-        this.magnetBoost = (saveData.magnetLvl - 1) * 15; // Mejora de Imán amplía el hitbox para el oro
+        this.magnetBoost = (saveData.magnetLvl - 1) * 15;
         this.updateHpUI();
     }
     jump() { this.isJumping = true; this.vy = this.jumpStrength; this.scaleY = 0.7; this.scaleX = 1.3; SoundEngine.jump(); }
@@ -307,6 +281,7 @@ class Miner {
         ctx.fillStyle = 'var(--primary)'; ctx.fillRect(-2 * s, -22 * s, 4 * s, 6 * s); ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(0, -34 * s, 6 * s, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = BIOMAS_CONFIG[biomaActual].colorCore; ctx.beginPath(); ctx.roundRect(-4 * s, -36 * s, 8 * s, 3.5 * s, 1 * s); ctx.fill(); ctx.restore();
         ctx.save(); const headY = p.y + (-34 * s) + currentBob; let currentLightRadius = this.lightMaxRadius;
+        if (biomaActual === 'ABISO') { currentLightRadius *= (0.35 + Math.abs(Math.sin(frameCount * 0.1)) * 0.65); }
         let lightCone = ctx.createRadialGradient(p.x, headY, 0, p.x, headY + 300, currentLightRadius);
         lightCone.addColorStop(0, 'rgba(255, 255, 255, 0.6)'); lightCone.addColorStop(0.2, `rgba(${BIOMAS_CONFIG[biomaActual].rgb}, 0.15)`); lightCone.addColorStop(0.8, 'rgba(0, 0, 0, 0)');
         ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = lightCone; ctx.beginPath(); ctx.moveTo(p.x, headY);
@@ -326,17 +301,9 @@ function evaluarBiomaPorProfundidad(dist) {
 
 function checkCollision3D(pRef, eRef) {
     if (Math.abs(pRef.z - eRef.z) > 40) return false;
-
-    // El Imán magnético perdona el carril si es oro
     let laneDist = Math.abs(LANES_X[currentLane] - eRef.x);
-    if (eRef.type === 'gold' && laneDist <= pRef.magnetBoost) {
-        // Imán atrae moneda
-        eRef.x += (LANES_X[currentLane] - eRef.x) * 0.2;
-        return true;
-    } else if (LANES_X[currentLane] !== eRef.x) {
-        return false;
-    }
-
+    if (eRef.type === 'gold' && laneDist <= pRef.magnetBoost) { eRef.x += (LANES_X[currentLane] - eRef.x) * 0.2; return true; }
+    else if (LANES_X[currentLane] !== eRef.x) { return false; }
     if (eRef.type === 'obstacle_low' && pRef.y < -35) return false;
     return true;
 }
@@ -362,13 +329,8 @@ function endGame(reason, color) {
 
     if (exito) {
         saveData.gold += goldCollected;
-        if (levelSelected === saveData.maxNivelDesbloqueado && saveData.maxNivelDesbloqueado < CAMPANA_MISIONES.length - 1) {
-            saveData.maxNivelDesbloqueado++;
-        }
-
-        saveGameData();
-        goReason.innerHTML = "MISIÓN CUMPLIDA";
-        goReason.style.color = "#00ff66";
+        if (levelSelected === saveData.maxNivelDesbloqueado && saveData.maxNivelDesbloqueado < CAMPANA_MISIONES.length - 1) saveData.maxNivelDesbloqueado++;
+        saveGameData(); goReason.innerHTML = "MISIÓN CUMPLIDA"; goReason.style.color = "#00ff66";
         goStats.innerHTML = `<span style='color:var(--text-main)'>Cristales conseguidos:</span> <span style='color:#ffcc00'>+${goldCollected}</span><br><br>Has alcanzado los ${finalDist}m y reparado el sector.<br>Se desbloqueó una nueva cueva.`;
     } else {
         goStats.innerHTML = `Cristales obtenidos: ${goldCollected} / ${conf.cuota}<br>Profundidad: ${finalDist}m / ${conf.metaDist}m<br><br><span style='color:var(--danger)'>No lograste cumplir el objetivo a tiempo.</span>`;
