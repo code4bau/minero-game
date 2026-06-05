@@ -2,10 +2,8 @@
         --primary: #00f0ff;
         --primary-glow: rgba(0, 240, 255, 0.3);
         --accent: #ffcc00;
-        /* Oro más legible */
         --danger: #ff3c3c;
         --text-main: #e2e8f0;
-        /* Blanco roto para lectura sin fatiga visual */
         --text-muted: #94a3b8;
         --panel-bg: rgba(6, 11, 20, 0.95);
         --panel-border: rgba(0, 240, 255, 0.25);
@@ -17,21 +15,26 @@
         touch-action: none;
     }
 
+    html,
     body {
         margin: 0;
         padding: 0;
         background: #000;
         color: var(--text-main);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        height: -webkit-fill-available;
+        width: 100%;
+        height: 100%;
         overflow: hidden;
         font-family: 'Share Tech Mono', monospace;
         user-select: none;
     }
 
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* CONTENEDOR ESCRITORIO */
     #gameWrapper {
         position: relative;
         width: 600px;
@@ -42,12 +45,23 @@
         border: 1px solid var(--panel-border);
     }
 
+    /* CONTROL TOTAL DE VIEWPORT EN MÓVILES */
     @media (max-width: 768px) {
+
+        html,
+        body {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
         #gameWrapper {
             width: 100vw;
-            height: 100vh;
-            height: -webkit-fill-available;
+            height: 100%;
             border: none;
+            border-radius: 0;
         }
     }
 
@@ -55,7 +69,6 @@
         display: block;
         width: 100%;
         height: 100%;
-        object-fit: cover;
     }
 
     #hud {
@@ -96,7 +109,7 @@
     }
 
     .hud-label {
-        font-size: 11px;
+        font-size: 10px;
         color: var(--text-muted);
         text-transform: uppercase;
         font-family: 'Orbitron', sans-serif;
@@ -110,7 +123,6 @@
         display: flex;
         align-items: baseline;
         gap: 4px;
-        text-shadow: none;
     }
 
     .hp-container {
@@ -147,16 +159,74 @@
         padding: 25px;
     }
 
+    .overlay::before {
+        content: " ";
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%);
+        z-index: 2;
+        background-size: 100% 4px;
+        pointer-events: none;
+    }
+
     .splash-frame {
         position: relative;
         width: 100%;
-        max-width: 460px;
+        max-width: 440px;
         padding: 25px;
         border: 1px solid var(--panel-border);
         background: rgba(2, 6, 12, 0.8);
         backdrop-filter: blur(10px);
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
         z-index: 10;
+    }
+
+    .main-title-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .cyber-logo {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 12px;
+        z-index: 10;
+        animation: logo-flicker 4s infinite ease-in-out;
+    }
+
+    @keyframes logo-flicker {
+
+        0%,
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        32% {
+            opacity: 0.85;
+        }
+
+        33% {
+            opacity: 1;
+        }
+
+        86% {
+            opacity: 0.4;
+        }
+
+        87% {
+            opacity: 0.95;
+        }
+
+        88% {
+            opacity: 1;
+        }
     }
 
     .game-title {
@@ -180,7 +250,6 @@
         text-transform: uppercase;
     }
 
-    /* Mejora de legibilidad: Fondo oscuro puro, texto gris claro, sin sombra intensa */
     .terminal-box {
         background: #03060a;
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -191,7 +260,6 @@
         line-height: 1.6;
         margin-bottom: 20px;
         text-align: left;
-        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
     }
 
     .typewriter-cursor::after {
@@ -319,12 +387,6 @@
         color: var(--text-main);
     }
 
-    .upgrade-info span {
-        color: var(--primary);
-        font-family: 'Orbitron';
-        font-weight: bold;
-    }
-
     .wallet-display {
         font-family: 'Orbitron';
         font-size: 16px;
@@ -343,61 +405,4 @@
     #briefingMenu,
     #gameOverMenu {
         display: none;
-    }
-
-    /* --- ESTILOS DEL LOGO VECTORIAL --- */
-    .main-title-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .cyber-logo {
-        width: 110px;
-        height: 110px;
-        margin-bottom: 15px;
-        z-index: 10;
-        animation: logo-flicker 4s infinite ease-in-out;
-    }
-
-    /* Animación procedimental que simula falla de energía en el laboratorio */
-    @keyframes logo-flicker {
-
-        0%,
-        100% {
-            opacity: 1;
-            transform: scale(1);
-            filter: drop-shadow(0 0 2px var(--primary-glow));
-        }
-
-        31% {
-            opacity: 1;
-        }
-
-        32% {
-            opacity: 0.85;
-            transform: scale(0.99);
-        }
-
-        33% {
-            opacity: 1;
-        }
-
-        85% {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        86% {
-            opacity: 0.4;
-        }
-
-        87% {
-            opacity: 0.95;
-        }
-
-        88% {
-            opacity: 1;
-        }
     }
