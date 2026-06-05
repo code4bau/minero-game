@@ -1,15 +1,15 @@
 {
-    "name": "Deep Cavern: Tactical Extraction",
-    "short_name": "Deep Cavern",
+    "name": "Caverna Neón: Diario de Supervivencia",
+    "short_name": "Caverna Neón",
     "start_url": "/",
     "display": "fullscreen",
-    "background_color": "#02060d",
+    "background_color": "#040912",
     "theme_color": "#00f0ff",
     "orientation": "portrait",
     "icons": [
         {
-            "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%2300f0ff'><rect width='512' height='512' rx='100' fill='%2302060d'/><path d='M256 90TD130 230H210V420H302V230H382Z'/></svg>",
-            "sizes": "512x512",
+            "src": "logo.svg",
+            "sizes": "any",
             "type": "image/svg+xml",
             "purpose": "any maskable"
         }
