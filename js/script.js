@@ -167,6 +167,12 @@ function ejecutarUpgrade(type) {
 function switchView(target) {
     if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => { });
     Object.values(views).forEach(v => { if (v) v.style.display = 'none'; });
+    
+    const shopBtn = document.getElementById('shopBtnTop');
+    if (shopBtn) {
+        shopBtn.style.display = (target === 'main' || target === 'map' || target === 'shop') ? 'flex' : 'none';
+    }
+    
     if (target === 'main') { views.main.style.display = 'flex'; currentState = 'MENU'; }
     else if (target === 'shop') { views.shop.style.display = 'flex'; updateShopUI(); currentState = 'MENU'; }
     else if (target === 'map') { views.map.style.display = 'flex'; buildMapNodes(); currentState = 'MENU'; }
@@ -361,7 +367,7 @@ class Miner {
         let lightCone = ctx.createRadialGradient(p.x, headY, 0, p.x, headY + 300, currentLightRadius);
         lightCone.addColorStop(0, 'rgba(255, 255, 255, 0.6)'); lightCone.addColorStop(0.2, `rgba(${BIOMAS_CONFIG[biomaActual].rgb}, 0.15)`); lightCone.addColorStop(0.8, 'rgba(0, 0, 0, 0)');
         ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = lightCone; ctx.beginPath(); ctx.moveTo(p.x, headY);
-        const sweepX = p.x + (this.tilt * 200); ctx.lineTo(sweepX - 170, headY + 450); ctx.lineTo(sweepX + 170, headY + 450); ctx.closePath(); ctx.fill(); restore();
+        const sweepX = p.x + (this.tilt * 200); ctx.lineTo(sweepX - 170, headY + 450); ctx.lineTo(sweepX + 170, headY + 450); ctx.closePath(); ctx.fill(); ctx.restore();
     }
 }
 
@@ -369,7 +375,7 @@ function evaluarBiomaPorProfundidad(dist) {
     let conf = CAMPANA_MISIONES[levelSelected]; let porc = dist / conf.metaDist; let prev = biomaActual;
     if (conf.biomaBase === 'CRIO') { biomaActual = porc < 0.6 ? 'CRIO' : 'MAGMA'; } else if (conf.biomaBase === 'MAGMA') { biomaActual = porc < 0.5 ? 'MAGMA' : 'ABISO'; } else { biomaActual = 'ABISO'; }
     if (prev !== biomaActual) {
-        document.getElementById('lblBioma').innerText = BIOMAS_CONFIG[biomaActual].name;
+        const lbl = document.getElementById('lblBioma'); if (lbl) lbl.innerText = BIOMAS_CONFIG[biomaActual].name;
         globalSpeed *= 1.35; screenShake = 35; damageFlashTime = 20; biomeAlertTimer = 120; SoundEngine.alert();
         createExplosion(0, CAMERA_Y, 400, BIOMAS_CONFIG[biomaActual].colorCore, 40);
     }
@@ -392,7 +398,7 @@ function ejecutarInmersion() {
     entityPool.forEach(e => e.active = false);
     globalSpeed = conf.vInicial; distanceTraveled = 0; goldCollected = 0; frameCount = 0; currentLane = 1;
     biomaActual = conf.biomaBase; biomeAlertTimer = 0;
-    document.getElementById('lblBioma').innerText = BIOMAS_CONFIG[biomaActual].name;
+    const lbl = document.getElementById('lblBioma'); if (lbl) lbl.innerText = BIOMAS_CONFIG[biomaActual].name;
     uiTargetGold.innerText = conf.cuota; uiMaxDist.innerText = `/ ${conf.metaDist}m`;
     player = new Miner(); uiGold.innerText = '0'; uiDist.innerText = '0'; uiGold.style.color = 'var(--text-main)';
     initAtmosphericDust(); currentState = 'PLAYING'; requestAnimationFrame(gameLoop);
