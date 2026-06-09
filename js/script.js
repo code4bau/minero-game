@@ -1,32 +1,40 @@
 const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
-const views = { main: document.getElementById('startMenu'), map: document.getElementById('mapMenu'), briefing: document.getElementById('briefingMenu'), shop: document.getElementById('shopMenu'), gameover: document.getElementById('gameOverMenu'), hud: document.getElementById('hud') };
+const views = { main: document.getElementById('startMenu'), map: document.getElementById('mapMenu'), briefing: document.getElementById('briefingMenu'), shop: document.getElementById('shopMenu'), gameover: document.getElementById('gameOverMenu'), hud: document.getElementById('hud'), cinematic: document.getElementById('cinematicMenu') };
 const uiGold = document.getElementById('goldText'), uiDist = document.getElementById('distText'), uiHpBar = document.getElementById('hpBar'), uiHpText = document.getElementById('hpText'), uiTargetGold = document.getElementById('targetGoldText'), uiMaxDist = document.getElementById('maxDistHud'), goReason = document.getElementById('gameOverReason'), goStats = document.getElementById('finalStats');
 
-// MOTOR AUDIO PROCEDURAL
+// MOTOR AUDIO PROCEDURAL CON BLOQUEO ANTI-CRASH DEFENSIVO
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const SoundEngine = {
     playTone: (freq, type, duration, vol) => {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-        osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + duration);
+        try {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+
+            let endTime = audioCtx.currentTime + duration;
+            gain.gain.linearRampToValueAtTime(0.01, endTime);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(endTime);
+        } catch (e) {
+            console.warn("Audio timeline collision avoided safely:", e);
+        }
     },
-    jump: () => SoundEngine.playTone(150, 'sine', 0.3, 0.5),
-    coin: () => SoundEngine.playTone(800, 'square', 0.1, 0.2),
-    hit: () => SoundEngine.playTone(80, 'sawtooth', 0.4, 0.6),
-    alert: () => { SoundEngine.playTone(400, 'square', 0.2, 0.3); setTimeout(() => SoundEngine.playTone(300, 'square', 0.3, 0.3), 200); }
+    jump: () => SoundEngine.playTone(150, 'sine', 0.3, 0.4),
+    coin: () => SoundEngine.playTone(850, 'square', 0.08, 0.15),
+    hit: () => SoundEngine.playTone(90, 'sawtooth', 0.3, 0.5),
+    alert: () => { SoundEngine.playTone(380, 'square', 0.15, 0.2); setTimeout(() => SoundEngine.playTone(280, 'square', 0.2, 0.2), 150); }
 };
 
-// BASE DE DATOS DE CAMPANA
 const CAMPANA_MISIONES = [
     { id: 0, nombre: "NIVEL 1: Cueva de Hielo", metaDist: 2000, cuota: 10, biomaBase: "CRIO", vInicial: 15, textoStory: "Diario del día 1.\nEstoy atrapado. Hay cristales de energía azules brillando en las paredes. Si logro juntar 10 de estos cristales antes de llegar a los 2000 metros, podré reactivar la radio." },
     { id: 1, nombre: "NIVEL 2: Cañón de Lava", metaDist: 3500, cuota: 15, biomaBase: "MAGMA", vInicial: 19, textoStory: "Diario del día 3.\nEl túnel bajó hacia una zona volcánica. El traje se está sobrecalentando rápido. Necesito 15 cristales para darle energía a la refrigeración de la armadura. Tengo que ser rápido." },
-    { id: 2, nombre: "NIVEL 3: El Nexo de Datos", metaDist: 5000, cuota: 25, biomaBase: "ABISO", vInicial: 24, textoStory: "Diario del día 7.\nLlegué al Nexo de Datos. No hay piedra acá abajo; las paredes son estructuras geométricas puras que titilan en la oscuridad. La linterna falla por la interferencia magnética. Descubrí que el colapso de la superficie no fue un accidente natural. Necesito 25 cristales para encender el decodificador y extraer la verdad." },
-    { id: 3, nombre: "NIVEL 4: Falla del Núcleo", metaDist: 6500, cuota: 30, biomaBase: "MAGMA", vInicial: 27, textoStory: "Diario del día 11.\nEl entorno se volvió inestable. El magma se está filtrando a través de los servidores de la caverna y la armadura del traje está absorbiendo demasiada radiación. La velocidad de descenso es peligrosa. Juntá 30 cristales para sobrecargar los escudos del chasis antes de que los sistemas se bloqueen." },
-    { id: 4, nombre: "NIVEL 5: La Ecuación Final", metaDist: 8000, cuota: 40, biomaBase: "ABISO", vInicial: 30, textoStory: "Diario del día 15.\nEste es el punto de no retorno. La gravedad está alterada y la señal de radio con la estación espacial exterior se está desvaneciendo. Si logro extraer los últimos 40 cristales, podré transmitir los datos de salvación para el resto de la humanidad. Después de esto, ya no habrá forma de salir." }
+    { id: 2, nombre: "NIVEL 3: El Nexo de Datos", metaDist: 5000, cuota: 25, biomaBase: "ABISO", vInicial: 24, textoStory: "Diario del día 7.\nLlegué al Nexo de Datos. No hay piedra acá abajo; las paredes son estructuras geométricas puras que titilan en la oscuridad. La linterna falla por la interferencia magnética. Descubrí que el colapso de la superficie no fue un accidente natural. Necesito 25 cristales para encender el decodificador." },
+    { id: 3, nombre: "NIVEL 4: Falla del Núcleo", metaDist: 6500, cuota: 30, biomaBase: "MAGMA", vInicial: 27, textoStory: "Diario del día 11.\nEl entorno se volvió inestable. El magma se está filtrando a través de los servidores de la caverna y la armadura del traje está absorbiendo demasiada radiación. La velocidad de descenso es peligrosa. Juntá 30 cristales para sobrecargar los escudos." },
+    { id: 4, nombre: "NIVEL 5: La Ecuación Final", metaDist: 8000, cuota: 40, biomaBase: "ABISO", vInicial: 30, textoStory: "Diario del día 15.\nEste es el punto de no retorno. La gravedad está alterada y la señal de radio con la estación espacial exterior se está desvaneciendo. Si logro extraer los últimos 40 cristales, podré transmitir los datos de salvación para el resto de la humanidad." },
+    { id: 5, nombre: "NIVEL 6: Ruinas de Silicio", metaDist: 9500, cuota: 45, biomaBase: "MAGMA", vInicial: 32, textoStory: "Diario del día 19.\nHe detectado cimientos de una antigua megaestructura de servidores sepultada por la lava. El calor de las placas de silicio deforma la telemetría. Cuota: 45 cristales." },
+    { id: 6, nombre: "NIVEL 7: Fosa Holográfica", metaDist: 11000, cuota: 50, biomaBase: "ABISO", vInicial: 35, textoStory: "Diario del día 24.\nLas leyes de la física ya no se aplican en esta profundidad. Todo el entorno está compuesto de proyecciones de luz sólida erráticas. Juntá 50 cristales para estabilizar la frecuencia." },
+    { id: 7, nombre: "NIVEL 8: Singularidad FSM", metaDist: 13000, cuota: 60, biomaBase: "ABISO", vInicial: 38, textoStory: "Diario del día 30.\nEstoy frente a la fuente de la anomalía FSM. Si completo la recolección de los últimos 60 cristales primordiales, el algoritmo se cerrará y la información será evacuada a la órbita." }
 ];
 
 const FOV = 280; const CAMERA_Y = -120; let HORIZON_Y = canvas.height * 0.45; let CENTER_X = canvas.width / 2;
@@ -34,23 +42,23 @@ const LANE_SPACING = 60; const LANES_X = [-LANE_SPACING, 0, LANE_SPACING];
 
 let saveData = { gold: 0, hpLvl: 1, lightLvl: 1, magnetLvl: 1, maxNivelDesbloqueado: 0 };
 let levelSelected = 0;
-let globalSpeed = 16, distanceTraveled = 0, goldCollected = 0, frameCount = 0, currentLane = 1;
+let globalSpeed = 16; let distanceTraveled = 0; let goldCollected = 0; let frameCount = 0; let currentLane = 1;
 let player = null, screenShake = 0, damageFlashTime = 0, biomaActual = 'CRIO', biomeAlertTimer = 0;
 
+// CORRECCIÓN: Se restituye la propiedad colorMid requerida por el motor gráfico
 const BIOMAS_CONFIG = {
-    CRIO: { colorCore: '#00f0ff', rgb: '0, 240, 255', name: 'Cueva de Hielo' },
-    MAGMA: { colorCore: '#ff5500', rgb: '255, 85, 0', name: 'Cañón de Lava' },
-    ABISO: { colorCore: '#7900ff', rgb: '121, 0, 255', name: 'Abismo Oscuro' }
+    CRIO: { colorCore: '#00f0ff', rgb: '0, 240, 255', colorMid: '#062f4f', name: 'Cueva de Hielo' },
+    MAGMA: { colorCore: '#ff5500', rgb: '255, 85, 0', colorMid: '#4a0e17', name: 'Cañón de Lava' },
+    ABISO: { colorCore: '#7900ff', rgb: '121, 0, 255', colorMid: '#1a0033', name: 'Abismo Oscuro' }
 };
 
 const LAUNCH_PATTERNS = [
-    [{ l: 0, t: 'obstacle_low', z: 0 }, { l: 1, t: 'gold', z: 140 }, { l: 2, t: 'obstacle_high', z: 280 }],
-    [{ l: 0, t: 'obstacle_low', z: 0 }, { l: 1, t: 'obstacle_low', z: 0 }, { l: 2, t: 'obstacle_low', z: 0 }, { l: 1, t: 'gold', z: 120 }],
-    [{ l: 0, t: 'obstacle_high', z: 0 }, { l: 2, t: 'obstacle_high', z: 0 }, { l: 1, t: 'gold', z: 140 }],
-    [{ l: 1, t: 'gold', z: 0 }, { l: 0, t: 'gold', z: 100 }, { l: 2, t: 'gold', z: 200 }, { l: 1, t: 'gold', z: 300 }]
+    [{ l: 1, t: 'obstacle_high', z: 0 }, { l: 0, t: 'gold', z: 100 }, { l: 2, t: 'gold', z: 100 }],
+    [{ l: 1, t: 'obstacle_low', z: 0 }, { l: 2, t: 'obstacle_high', z: 140 }, { l: 0, t: 'gold', z: 240 }],
+    [{ l: 0, t: 'obstacle_high', z: 0 }, { l: 2, t: 'obstacle_high', z: 0 }, { l: 1, t: 'obstacle_low', z: 150 }, { l: 1, t: 'gold', z: 150 }],
+    [{ l: 0, t: 'gold', z: 0 }, { l: 1, t: 'obstacle_low', z: 100 }, { l: 2, t: 'gold', z: 200 }, { l: 1, t: 'obstacle_high', z: 300 }]
 ];
 
-// POOLING SYSTEM DE MEMORIA RAM
 class Entity3D {
     constructor() { this.active = false; this.lane = 0; this.x = 0; this.y = 0; this.z = 0; this.type = ''; this.baseRadius = 0; this.rotation = 0; }
     spawn(lane, type, zOffset) {
@@ -129,14 +137,13 @@ function spawnPatternChunk() {
     for (let i = 0; i < chunk.length; i++) { let ent = getFreeEntity(); if (ent) ent.spawn(chunk[i].l, chunk[i].t, chunk[i].z); }
 }
 
-// ENLACE DE DATOS
 function loadGameData() {
-    const local = localStorage.getItem('deep_cavern_save_v3');
+    const local = localStorage.getItem('deep_cavern_save_v4');
     if (local) { try { saveData = JSON.parse(local); } catch (e) { } }
     if (saveData.maxNivelDesbloqueado === undefined || typeof saveData.maxNivelDesbloqueado !== 'number') saveData.maxNivelDesbloqueado = 0;
     updateShopUI(); buildMapNodes();
 }
-function saveGameData() { localStorage.setItem('deep_cavern_save_v3', JSON.stringify(saveData)); }
+function saveGameData() { localStorage.setItem('deep_cavern_save_v4', JSON.stringify(saveData)); }
 
 function updateShopUI() {
     document.getElementById('txtWallet').innerText = saveData.gold;
@@ -158,11 +165,12 @@ function ejecutarUpgrade(type) {
 }
 
 function switchView(target) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    Object.values(views).forEach(v => v.style.display = 'none');
+    if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => { });
+    Object.values(views).forEach(v => { if (v) v.style.display = 'none'; });
     if (target === 'main') { views.main.style.display = 'flex'; currentState = 'MENU'; }
     else if (target === 'shop') { views.shop.style.display = 'flex'; updateShopUI(); currentState = 'MENU'; }
     else if (target === 'map') { views.map.style.display = 'flex'; buildMapNodes(); currentState = 'MENU'; }
+    else if (target === 'cinematic') { views.cinematic.style.display = 'flex'; currentState = 'MENU'; }
 }
 
 function buildMapNodes() {
@@ -175,20 +183,77 @@ function buildMapNodes() {
     });
 }
 
-let typewriterTimer = null;
+let cinematicTimeout = null;
+let isSkipping = false;
 function inicializarNarrativaBriefing(misionId) {
-    levelSelected = misionId; switchView('none'); views.briefing.style.display = 'flex';
+    levelSelected = misionId;
+    if (misionId === 0) {
+        switchView('cinematic');
+        isSkipping = false;
+        
+        const cinematicMenu = document.getElementById('cinematicMenu');
+        cinematicMenu.style.opacity = '0';
+        cinematicMenu.style.transition = 'opacity 1.5s ease-in-out';
+        
+        const video = document.getElementById('introVideo');
+        if (video) {
+            video.currentTime = 0;
+            video.play().catch(e => console.warn("Autoplay prevented:", e));
+            video.onended = () => saltarCinematica();
+        }
+        
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                cinematicMenu.style.opacity = '1';
+            });
+        });
+        
+        return;
+    }
+    mostrarBriefing();
+}
+
+function saltarCinematica() {
+    if (isSkipping) return;
+    isSkipping = true;
+    
+    const video = document.getElementById('introVideo');
+    const cinematicMenu = document.getElementById('cinematicMenu');
+    
+    cinematicMenu.style.opacity = '0';
+    
+    setTimeout(() => {
+        if (video) {
+            video.pause();
+        }
+        cinematicMenu.style.transition = '';
+        cinematicMenu.style.opacity = '';
+        mostrarBriefing();
+    }, 1500);
+}
+
+let typewriterTimer = null;
+function mostrarBriefing() {
+    switchView('none'); views.briefing.style.display = 'flex';
     const txtBox = document.getElementById('briefingTexto'); txtBox.innerText = '';
-    const fullText = CAMPANA_MISIONES[misionId].textoStory; let charIdx = 0;
-    if (typewriterTimer) clearInterval(typewriterTimer); document.getElementById('btnIniciarMision').style.display = 'none';
+    const fullText = CAMPANA_MISIONES[levelSelected].textoStory; let charIdx = 0;
+
+    if (typewriterTimer) clearInterval(typewriterTimer);
+    document.getElementById('btnIniciarMision').style.display = 'none';
+
     typewriterTimer = setInterval(() => {
-        txtBox.innerText += fullText.charAt(charIdx); charIdx++;
-        if (charIdx % 3 === 0) SoundEngine.playTone(600, 'sine', 0.05, 0.05);
-        if (charIdx >= fullText.length) { clearInterval(typewriterTimer); document.getElementById('btnIniciarMision').style.display = 'block'; }
+        try {
+            txtBox.innerText += fullText.charAt(charIdx); charIdx++;
+            if (charIdx % 3 === 0) SoundEngine.playTone(600, 'sine', 0.05, 0.05);
+            if (charIdx >= fullText.length) { clearInterval(typewriterTimer); document.getElementById('btnIniciarMision').style.display = 'block'; }
+        } catch (err) {
+            clearInterval(typewriterTimer);
+            txtBox.innerText = fullText;
+            document.getElementById('btnIniciarMision').style.display = 'block';
+        }
     }, 20);
 }
 
-// RESOLUCIÓN REAL ADAPTATIVA
 function resizeCanvas() {
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * window.devicePixelRatio; canvas.height = rect.height * window.devicePixelRatio;
@@ -216,11 +281,16 @@ window.addEventListener('keydown', e => {
 function triggerLaneChangeParticles() { if (player) createExplosion(player.x, player.y, player.z, 'var(--primary)', 4); }
 function project(x, y, z) { if (z <= 0) return { scale: 0, x: 0, y: 0 }; const scale = (FOV * (canvas.width / 600)) / z; return { x: CENTER_X + (x * scale), y: HORIZON_Y + ((y - CAMERA_Y) * scale), scale: scale }; }
 
-// DIBUJO GEOMÉTRICO DINÁMICO PROPORCIONAL AL ANCHO REAL DEL CANVAS
 function drawAtmosphericCave() {
     const config = BIOMAS_CONFIG[biomaActual];
     let coreGrad = ctx.createRadialGradient(CENTER_X, HORIZON_Y - 20, 5, CENTER_X, HORIZON_Y - 20, canvas.height * 0.7);
-    coreGrad.addColorStop(0, config.colorCore); coreGrad.addColorStop(0.3, '#020408'); coreGrad.addColorStop(1, '#000000');
+
+    let visibilityCap = 0.03 + (saveData.lightLvl - 1) * 0.05;
+    coreGrad.addColorStop(0, config.colorCore);
+    coreGrad.addColorStop(Math.min(visibilityCap, 0.25), config.colorMid);
+    coreGrad.addColorStop(0.35, '#010204');
+    coreGrad.addColorStop(1, '#000000');
+
     ctx.fillStyle = coreGrad; ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#000'; ctx.beginPath(); ctx.moveTo(CENTER_X - 60, HORIZON_Y); ctx.quadraticCurveTo(CENTER_X, HORIZON_Y - 80, CENTER_X + 60, HORIZON_Y); ctx.quadraticCurveTo(CENTER_X, HORIZON_Y + 60, CENTER_X - 60, HORIZON_Y); ctx.fill();
 
@@ -236,7 +306,6 @@ function drawAtmosphericCave() {
         }
     }
 
-    // REDISEÑO EN BASE PROPORCIONAL (% DEL ANCHO): Libera los bordes en móviles estrechos
     let sideWallWidth = canvas.width * 0.18;
     ctx.fillStyle = '#010203';
     ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(sideWallWidth, HORIZON_Y); ctx.lineTo(sideWallWidth * 1.2, canvas.height); ctx.lineTo(0, canvas.height); ctx.closePath(); ctx.fill();
@@ -247,10 +316,10 @@ class Miner {
     constructor() {
         this.x = LANES_X[currentLane]; this.y = 0; this.z = 100; this.radius = 14; this.lerpFactor = 0.22;
         this.isJumping = false; this.vy = 0; this.gravity = 1.1; this.jumpStrength = -17;
-        this.maxHp = 100 + (saveData.hpLvl - 1) * 25; this.hp = this.maxHp; this.iFrames = 0;
+        this.maxHp = 100; this.hp = this.maxHp; this.iFrames = 0;
         this.tilt = 0; this.bobAngle = 0; this.scaleX = 1; this.scaleY = 1;
-        this.lightMaxRadius = 300 + (saveData.lightLvl - 1) * 60;
-        this.magnetBoost = (saveData.magnetLvl - 1) * 15;
+        this.lightMaxRadius = 300 + (saveData.lightLvl - 1) * 65;
+        this.magnetRange = (saveData.magnetLvl - 1) * 20;
         this.updateHpUI();
     }
     jump() { this.isJumping = true; this.vy = this.jumpStrength; this.scaleY = 0.7; this.scaleX = 1.3; SoundEngine.jump(); }
@@ -265,7 +334,9 @@ class Miner {
     }
     takeDamage(amount) {
         if (this.iFrames > 0) return;
-        this.hp = Math.max(0, this.hp - amount); this.iFrames = 40; this.updateHpUI(); SoundEngine.hit();
+        let damageReduction = (saveData.hpLvl - 1) * 0.12;
+        let finalDamage = amount * (1 - damageReduction);
+        this.hp = Math.max(0, this.hp - finalDamage); this.iFrames = 40; this.updateHpUI(); SoundEngine.hit();
         screenShake = 22; damageFlashTime = 12; createExplosion(this.x, this.y - 15, this.z, 'var(--danger)', 20);
         if (this.hp <= 0) endGame("ARMADURA DESTRUIDA", "var(--danger)");
     }
@@ -275,17 +346,22 @@ class Miner {
         const p = project(this.x, this.y, this.z); if (p.scale === 0) return; const s = p.scale; const r = this.radius * s; const currentBob = this.isJumping ? 0 : Math.sin(this.bobAngle) * 3 * s;
         ctx.save(); ctx.translate(p.x, p.y + currentBob); ctx.rotate(this.tilt); ctx.scale(this.scaleX, this.scaleY);
         ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; ctx.beginPath(); ctx.ellipse(0, -this.y * s - currentBob, Math.max(5, r * (1 - Math.abs(this.y) / 250)), Math.max(2, r * 0.4), 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#111'; ctx.fillRect(-6 * s, -10 * s, 4 * s, 10 * s); ctx.fillRect(2 * s, -10 * s, 4 * s, 10 * s);
+
+        let shieldTones = ['#111', '#1a2430', '#253545', '#30465c', '#3c5875'];
+        ctx.fillStyle = shieldTones[Math.min(saveData.hpLvl - 1, 4)];
+        ctx.fillRect(-6 * s, -10 * s, 4 * s, 10 * s); ctx.fillRect(2 * s, -10 * s, 4 * s, 10 * s);
+
         ctx.fillStyle = BIOMAS_CONFIG[biomaActual].colorCore; ctx.fillRect(-6 * s, -5 * s, 4 * s, 2 * s); ctx.fillRect(2 * s, -5 * s, 4 * s, 2 * s);
         ctx.fillStyle = '#222'; ctx.beginPath(); ctx.roundRect(-9 * s, -28 * s, 18 * s, 18 * s, 2 * s); ctx.fill();
         ctx.fillStyle = 'var(--primary)'; ctx.fillRect(-2 * s, -22 * s, 4 * s, 6 * s); ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(0, -34 * s, 6 * s, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = BIOMAS_CONFIG[biomaActual].colorCore; ctx.beginPath(); ctx.roundRect(-4 * s, -36 * s, 8 * s, 3.5 * s, 1 * s); ctx.fill(); ctx.restore();
+
         ctx.save(); const headY = p.y + (-34 * s) + currentBob; let currentLightRadius = this.lightMaxRadius;
         if (biomaActual === 'ABISO') { currentLightRadius *= (0.35 + Math.abs(Math.sin(frameCount * 0.1)) * 0.65); }
         let lightCone = ctx.createRadialGradient(p.x, headY, 0, p.x, headY + 300, currentLightRadius);
         lightCone.addColorStop(0, 'rgba(255, 255, 255, 0.6)'); lightCone.addColorStop(0.2, `rgba(${BIOMAS_CONFIG[biomaActual].rgb}, 0.15)`); lightCone.addColorStop(0.8, 'rgba(0, 0, 0, 0)');
         ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = lightCone; ctx.beginPath(); ctx.moveTo(p.x, headY);
-        const sweepX = p.x + (this.tilt * 200); ctx.lineTo(sweepX - 170, headY + 450); ctx.lineTo(sweepX + 170, headY + 450); ctx.closePath(); ctx.fill(); ctx.restore();
+        const sweepX = p.x + (this.tilt * 200); ctx.lineTo(sweepX - 170, headY + 450); ctx.lineTo(sweepX + 170, headY + 450); ctx.closePath(); ctx.fill(); restore();
     }
 }
 
@@ -301,9 +377,12 @@ function evaluarBiomaPorProfundidad(dist) {
 
 function checkCollision3D(pRef, eRef) {
     if (Math.abs(pRef.z - eRef.z) > 40) return false;
-    let laneDist = Math.abs(LANES_X[currentLane] - eRef.x);
-    if (eRef.type === 'gold' && laneDist <= pRef.magnetBoost) { eRef.x += (LANES_X[currentLane] - eRef.x) * 0.2; return true; }
-    else if (LANES_X[currentLane] !== eRef.x) { return false; }
+    if (eRef.type === 'gold') {
+        let deltaX = Math.abs(pRef.x - eRef.x); let deltaY = Math.abs(pRef.y - eRef.y);
+        if (deltaX < 26 && deltaY < 28) return true;
+        return false;
+    }
+    if (currentLane !== eRef.lane) return false;
     if (eRef.type === 'obstacle_low' && pRef.y < -35) return false;
     return true;
 }
@@ -322,6 +401,7 @@ function ejecutarInmersion() {
 function reintentarMisionActual() { views.gameover.style.display = 'none'; ejecutarInmersion(); }
 function abortarMisionAlMenu() { views.gameover.style.display = 'none'; switchView('map'); }
 
+// CORRECCIÓN: Se actualiza el nombre dinámico del array de campaña en la lógica de persistencia
 function endGame(reason, color) {
     currentState = 'GAMEOVER'; views.hud.style.display = 'none'; goReason.innerHTML = reason; goReason.style.color = color;
     let conf = CAMPANA_MISIONES[levelSelected]; let finalDist = Math.floor(distanceTraveled / 10);
@@ -358,6 +438,12 @@ function gameLoop() {
     let activeEntities = [];
     for (let i = 0; i < entityPool.length; i++) {
         let e = entityPool[i]; if (!e.active) continue;
+
+        if (e.type === 'gold' && saveData.magnetLvl > 1 && e.z < 550) {
+            let intensity = (saveData.magnetLvl - 1) * 0.035;
+            e.x += (player.x - e.x) * intensity; e.y += (player.y - e.y) * intensity;
+        }
+
         e.update();
         if (e.z > 60 && e.z < 140 && checkCollision3D(player, e)) {
             if (e.type === 'gold') {
