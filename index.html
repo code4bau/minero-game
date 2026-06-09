@@ -7,9 +7,13 @@
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Misión Subterránea</title>
 
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" href="logo.svg">
   <link rel="manifest" href="manifest.json">
+
+  <link rel="icon" href="data:,">
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap"
     rel="stylesheet">
@@ -19,6 +23,15 @@
 
 <body>
   <div id="gameWrapper">
+    <!-- Botón de tienda flotante -->
+    <button id="shopBtnTop" onclick="switchView('shop')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <circle cx="9" cy="21" r="1"></circle>
+        <circle cx="20" cy="21" r="1"></circle>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+      </svg>
+    </button>
 
     <div id="startMenu" class="overlay">
       <div class="main-title-container">
@@ -53,7 +66,6 @@
           extracción.
         </div>
         <button class="btn-cyber" onclick="switchView('map')">Elegir Nivel</button>
-        <button class="btn-cyber-alt" onclick="switchView('shop')">Tienda de Mejoras</button>
       </div>
     </div>
 
@@ -66,6 +78,13 @@
         <div class="mission-list" id="misionesContenedor"></div>
         <button class="btn-cyber-alt" onclick="switchView('main')">Volver al Inicio</button>
       </div>
+    </div>
+
+    <div id="cinematicMenu" class="overlay" style="background-color: black;">
+      <video id="introVideo" style="width: 100%; height: 100%; object-fit: contain;" playsinline>
+        <source src="assets/PRESENTACION_DEEPCAVERN.mp4" type="video/mp4">
+      </video>
+      <button class="btn-cyber-alt skip-btn" style="position: absolute; bottom: 20px; right: 20px; z-index: 10;" onclick="saltarCinematica()">SALTAR VIDEO</button>
     </div>
 
     <div id="briefingMenu" class="overlay">
@@ -88,17 +107,17 @@
         <div class="wallet-display">CRISTALES: <span id="txtWallet">0</span></div>
         <div style="margin-bottom:20px;">
           <div class="upgrade-row">
-            <div class="upgrade-info">Armadura (Vida)<br><span id="txtLvlHp">Niv.1</span></div>
+            <div class="upgrade-info">Armadura (Reducción Daño)<br><span id="txtLvlHp">Niv.1</span></div>
             <button class="btn-cyber-alt" style="width: auto; padding: 8px 15px;" id="btnBuyHp"
               onclick="ejecutarUpgrade('hp')">5 U</button>
           </div>
           <div class="upgrade-row">
-            <div class="upgrade-info">Linterna (Visión)<br><span id="txtLvlLight">Niv.1</span></div>
+            <div class="upgrade-info">Linterna (Visibilidad)<br><span id="txtLvlLight">Niv.1</span></div>
             <button class="btn-cyber-alt" style="width: auto; padding: 8px 15px;" id="btnBuyLight"
               onclick="ejecutarUpgrade('light')">5 U</button>
           </div>
           <div class="upgrade-row">
-            <div class="upgrade-info">Imán de Cristales<br><span id="txtLvlMagnet">Niv.1</span></div>
+            <div class="upgrade-info">Imán Gravitacional (Atracción)<br><span id="txtLvlMagnet">Niv.1</span></div>
             <button class="btn-cyber-alt" style="width: auto; padding: 8px 15px;" id="btnBuyMagnet"
               onclick="ejecutarUpgrade('magnet')">5 U</button>
           </div>
@@ -128,7 +147,7 @@
           </div>
         </div>
         <div class="hud-card" style="text-align: right;">
-          <div class="hud-label" id="lblBioma">Analizando...</div>
+          <div class="hud-label">Analizando...</div>
           <div class="hud-value" style="justify-content: flex-end;"><span id="distText">0</span> <span class="unit"
               id="maxDistHud" style="color:var(--text-muted);">/ 5000m</span></div>
         </div>
@@ -144,7 +163,9 @@
 
     <canvas id="gameCanvas" width="600" height="800"></canvas>
   </div>
-  <script src="js/script.js"></script>
+
+  <script src="./js/script.js"></script>
+
 </body>
 
 </html>
