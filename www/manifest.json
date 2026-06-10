@@ -8,10 +8,21 @@
     "orientation": "portrait",
     "icons": [
         {
+            "src": "logo-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "logo-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
             "src": "logo.svg",
             "sizes": "any",
             "type": "image/svg+xml",
-            "purpose": "any maskable"
+            "purpose": "maskable"
         }
-    ]
+    ],
+    "description": "Juego de supervivencia cyberpunk: desciende a las cavernas, recolecta cristales y repara la red del sector."
 }
