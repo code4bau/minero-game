@@ -1,0 +1,6 @@
+{
+  "appId": "com.code4bau.cavernaneon",
+  "appName": "Caverna Neon",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}

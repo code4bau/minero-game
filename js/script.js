@@ -1,5 +1,5 @@
 const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
-const views = { main: document.getElementById('startMenu'), map: document.getElementById('mapMenu'), briefing: document.getElementById('briefingMenu'), shop: document.getElementById('shopMenu'), gameover: document.getElementById('gameOverMenu'), hud: document.getElementById('hud'), cinematic: document.getElementById('cinematicMenu') };
+const views = { main: document.getElementById('startMenu'), map: document.getElementById('mapMenu'), briefing: document.getElementById('briefingMenu'), shop: document.getElementById('shopMenu'), gameover: document.getElementById('gameOverMenu'), hud: document.getElementById('hud') };
 const uiGold = document.getElementById('goldText'), uiDist = document.getElementById('distText'), uiHpBar = document.getElementById('hpBar'), uiHpText = document.getElementById('hpText'), uiTargetGold = document.getElementById('targetGoldText'), uiMaxDist = document.getElementById('maxDistHud'), goReason = document.getElementById('gameOverReason'), goStats = document.getElementById('finalStats');
 
 // MOTOR AUDIO PROCEDURAL CON BLOQUEO ANTI-CRASH DEFENSIVO
@@ -44,8 +44,8 @@ let saveData = { gold: 0, hpLvl: 1, lightLvl: 1, magnetLvl: 1, maxNivelDesbloque
 let levelSelected = 0;
 let globalSpeed = 16; let distanceTraveled = 0; let goldCollected = 0; let frameCount = 0; let currentLane = 1;
 let player = null, screenShake = 0, damageFlashTime = 0, biomaActual = 'CRIO', biomeAlertTimer = 0;
+let adUsedInRun = false;
 
-// CORRECCIÓN: Se restituye la propiedad colorMid requerida por el motor gráfico
 const BIOMAS_CONFIG = {
     CRIO: { colorCore: '#00f0ff', rgb: '0, 240, 255', colorMid: '#062f4f', name: 'Cueva de Hielo' },
     MAGMA: { colorCore: '#ff5500', rgb: '255, 85, 0', colorMid: '#4a0e17', name: 'Cañón de Lava' },
@@ -166,17 +166,10 @@ function ejecutarUpgrade(type) {
 
 function switchView(target) {
     if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => { });
-    Object.values(views).forEach(v => { if (v) v.style.display = 'none'; });
-    
-    const shopBtn = document.getElementById('shopBtnTop');
-    if (shopBtn) {
-        shopBtn.style.display = (target === 'main' || target === 'map' || target === 'shop') ? 'flex' : 'none';
-    }
-    
+    Object.values(views).forEach(v => v.style.display = 'none');
     if (target === 'main') { views.main.style.display = 'flex'; currentState = 'MENU'; }
     else if (target === 'shop') { views.shop.style.display = 'flex'; updateShopUI(); currentState = 'MENU'; }
     else if (target === 'map') { views.map.style.display = 'flex'; buildMapNodes(); currentState = 'MENU'; }
-    else if (target === 'cinematic') { views.cinematic.style.display = 'flex'; currentState = 'MENU'; }
 }
 
 function buildMapNodes() {
@@ -189,60 +182,11 @@ function buildMapNodes() {
     });
 }
 
-let cinematicTimeout = null;
-let isSkipping = false;
-function inicializarNarrativaBriefing(misionId) {
-    levelSelected = misionId;
-    if (misionId === 0) {
-        switchView('cinematic');
-        isSkipping = false;
-        
-        const cinematicMenu = document.getElementById('cinematicMenu');
-        cinematicMenu.style.opacity = '0';
-        cinematicMenu.style.transition = 'opacity 1.5s ease-in-out';
-        
-        const video = document.getElementById('introVideo');
-        if (video) {
-            video.currentTime = 0;
-            video.play().catch(e => console.warn("Autoplay prevented:", e));
-            video.onended = () => saltarCinematica();
-        }
-        
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                cinematicMenu.style.opacity = '1';
-            });
-        });
-        
-        return;
-    }
-    mostrarBriefing();
-}
-
-function saltarCinematica() {
-    if (isSkipping) return;
-    isSkipping = true;
-    
-    const video = document.getElementById('introVideo');
-    const cinematicMenu = document.getElementById('cinematicMenu');
-    
-    cinematicMenu.style.opacity = '0';
-    
-    setTimeout(() => {
-        if (video) {
-            video.pause();
-        }
-        cinematicMenu.style.transition = '';
-        cinematicMenu.style.opacity = '';
-        mostrarBriefing();
-    }, 1500);
-}
-
 let typewriterTimer = null;
-function mostrarBriefing() {
-    switchView('none'); views.briefing.style.display = 'flex';
+function inicializarNarrativaBriefing(misionId) {
+    levelSelected = misionId; switchView('none'); views.briefing.style.display = 'flex';
     const txtBox = document.getElementById('briefingTexto'); txtBox.innerText = '';
-    const fullText = CAMPANA_MISIONES[levelSelected].textoStory; let charIdx = 0;
+    const fullText = CAMPANA_MISIONES[misionId].textoStory; let charIdx = 0;
 
     if (typewriterTimer) clearInterval(typewriterTimer);
     document.getElementById('btnIniciarMision').style.display = 'none';
@@ -253,8 +197,7 @@ function mostrarBriefing() {
             if (charIdx % 3 === 0) SoundEngine.playTone(600, 'sine', 0.05, 0.05);
             if (charIdx >= fullText.length) { clearInterval(typewriterTimer); document.getElementById('btnIniciarMision').style.display = 'block'; }
         } catch (err) {
-            clearInterval(typewriterTimer);
-            txtBox.innerText = fullText;
+            clearInterval(typewriterTimer); txtBox.innerText = fullText;
             document.getElementById('btnIniciarMision').style.display = 'block';
         }
     }, 20);
@@ -290,7 +233,6 @@ function project(x, y, z) { if (z <= 0) return { scale: 0, x: 0, y: 0 }; const s
 function drawAtmosphericCave() {
     const config = BIOMAS_CONFIG[biomaActual];
     let coreGrad = ctx.createRadialGradient(CENTER_X, HORIZON_Y - 20, 5, CENTER_X, HORIZON_Y - 20, canvas.height * 0.7);
-
     let visibilityCap = 0.03 + (saveData.lightLvl - 1) * 0.05;
     coreGrad.addColorStop(0, config.colorCore);
     coreGrad.addColorStop(Math.min(visibilityCap, 0.25), config.colorMid);
@@ -311,7 +253,6 @@ function drawAtmosphericCave() {
             ctx.strokeStyle = `rgba(${config.rgb}, ${pL.scale * 0.1})`; ctx.lineWidth = 1 * pL.scale; ctx.beginPath(); ctx.moveTo(project(-LANE_SPACING * 0.5, 0, currentZ).x, project(-LANE_SPACING * 0.5, 0, currentZ).y); ctx.lineTo(project(-LANE_SPACING * 0.5, 0, currentZ - 80).x, project(-LANE_SPACING * 0.5, 0, currentZ - 80).y); ctx.moveTo(project(LANE_SPACING * 0.5, 0, currentZ).x, project(LANE_SPACING * 0.5, 0, currentZ).y); ctx.lineTo(project(LANE_SPACING * 0.5, 0, currentZ - 80).x, project(LANE_SPACING * 0.5, 0, currentZ - 80).y); ctx.stroke();
         }
     }
-
     let sideWallWidth = canvas.width * 0.18;
     ctx.fillStyle = '#010203';
     ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(sideWallWidth, HORIZON_Y); ctx.lineTo(sideWallWidth * 1.2, canvas.height); ctx.lineTo(0, canvas.height); ctx.closePath(); ctx.fill();
@@ -375,7 +316,7 @@ function evaluarBiomaPorProfundidad(dist) {
     let conf = CAMPANA_MISIONES[levelSelected]; let porc = dist / conf.metaDist; let prev = biomaActual;
     if (conf.biomaBase === 'CRIO') { biomaActual = porc < 0.6 ? 'CRIO' : 'MAGMA'; } else if (conf.biomaBase === 'MAGMA') { biomaActual = porc < 0.5 ? 'MAGMA' : 'ABISO'; } else { biomaActual = 'ABISO'; }
     if (prev !== biomaActual) {
-        const lbl = document.getElementById('lblBioma'); if (lbl) lbl.innerText = BIOMAS_CONFIG[biomaActual].name;
+        document.getElementById('lblBioma').innerText = BIOMAS_CONFIG[biomaActual].name;
         globalSpeed *= 1.35; screenShake = 35; damageFlashTime = 20; biomeAlertTimer = 120; SoundEngine.alert();
         createExplosion(0, CAMERA_Y, 400, BIOMAS_CONFIG[biomaActual].colorCore, 40);
     }
@@ -397,8 +338,9 @@ function ejecutarInmersion() {
     let conf = CAMPANA_MISIONES[levelSelected]; views.briefing.style.display = 'none'; views.hud.style.display = 'block';
     entityPool.forEach(e => e.active = false);
     globalSpeed = conf.vInicial; distanceTraveled = 0; goldCollected = 0; frameCount = 0; currentLane = 1;
-    biomaActual = conf.biomaBase; biomeAlertTimer = 0;
-    const lbl = document.getElementById('lblBioma'); if (lbl) lbl.innerText = BIOMAS_CONFIG[biomaActual].name;
+    biomaActual = conf.biomaBase; biomeAlertTimer = 0; adUsedInRun = false;
+
+    document.getElementById('lblBioma').innerText = BIOMAS_CONFIG[biomaActual].name;
     uiTargetGold.innerText = conf.cuota; uiMaxDist.innerText = `/ ${conf.metaDist}m`;
     player = new Miner(); uiGold.innerText = '0'; uiDist.innerText = '0'; uiGold.style.color = 'var(--text-main)';
     initAtmosphericDust(); currentState = 'PLAYING'; requestAnimationFrame(gameLoop);
@@ -407,7 +349,21 @@ function ejecutarInmersion() {
 function reintentarMisionActual() { views.gameover.style.display = 'none'; ejecutarInmersion(); }
 function abortarMisionAlMenu() { views.gameover.style.display = 'none'; switchView('map'); }
 
-// CORRECCIÓN: Se actualiza el nombre dinámico del array de campaña en la lógica de persistencia
+function activarAnuncioRevivir() {
+    document.getElementById('btnRewardAd').style.display = 'none';
+    goReason.innerHTML = "CONECTANDO CON SATÉLITE DE ENERGÍA...";
+    setTimeout(() => {
+        player.hp = player.maxHp;
+        player.updateHpUI();
+        views.gameover.style.display = 'none';
+        views.hud.style.display = 'block';
+        currentState = 'PLAYING';
+        frameCount = 0;
+        requestAnimationFrame(gameLoop);
+        SoundEngine.alert();
+    }, 3000);
+}
+
 function endGame(reason, color) {
     currentState = 'GAMEOVER'; views.hud.style.display = 'none'; goReason.innerHTML = reason; goReason.style.color = color;
     let conf = CAMPANA_MISIONES[levelSelected]; let finalDist = Math.floor(distanceTraveled / 10);
@@ -417,9 +373,16 @@ function endGame(reason, color) {
         saveData.gold += goldCollected;
         if (levelSelected === saveData.maxNivelDesbloqueado && saveData.maxNivelDesbloqueado < CAMPANA_MISIONES.length - 1) saveData.maxNivelDesbloqueado++;
         saveGameData(); goReason.innerHTML = "MISIÓN CUMPLIDA"; goReason.style.color = "#00ff66";
-        goStats.innerHTML = `<span style='color:var(--text-main)'>Cristales conseguidos:</span> <span style='color:#ffcc00'>+${goldCollected}</span><br><br>Has alcanzado los ${finalDist}m y reparado el sector.<br>Se desbloqueó una nueva cueva.`;
+        document.getElementById('btnRewardAd').style.display = 'none';
+        goStats.innerHTML = `<span style='color:var(--text-main)'>Cristales conseguidos:</span> <span style='color:#ffcc00'>+${goldCollected}</span><br><br>Has alcanzado los ${finalDist}m y reparado el sector.`;
     } else {
-        goStats.innerHTML = `Cristales obtenidos: ${goldCollected} / ${conf.cuota}<br>Profundidad: ${finalDist}m / ${conf.metaDist}m<br><br><span style='color:var(--danger)'>No lograste cumplir el objetivo a tiempo.</span>`;
+        if (player.hp <= 0 && !adUsedInRun) {
+            document.getElementById('btnRewardAd').style.display = 'block';
+            adUsedInRun = true;
+        } else {
+            document.getElementById('btnRewardAd').style.display = 'none';
+        }
+        goStats.innerHTML = `Cristales obtenidos: ${goldCollected} / ${conf.cuota}<br>Profundidad: ${finalDist}m / ${conf.metaDist}m`;
     }
     views.gameover.style.display = 'flex';
 }
