@@ -22,6 +22,11 @@
 <body>
   <div id="gameWrapper">
 
+    <div id="videoContainer" class="overlay" style="display: none; background: #000; z-index: 100;">
+      <video id="introVideo" playsinline style="width: 100%; height: 100%; object-fit: contain;"></video>
+      <button class="btn-cyber-alt" style="position: absolute; bottom: 30px; width: auto; right: 30px; z-index: 101;" onclick="terminarVideo()">Saltar Intro</button>
+    </div>
+
     <div id="startMenu" class="overlay">
       <div class="main-title-container">
         <svg class="cyber-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
@@ -132,7 +137,7 @@
           </div>
         </div>
         <div class="hud-card" style="text-align: right;">
-          <div class="hud-label">Analizando...</div>
+          <div class="hud-label" id="lblBioma">Analizando...</div>
           <div class="hud-value" style="justify-content: flex-end;"><span id="distText">0</span> <span class="unit"
               id="maxDistHud" style="color:var(--text-muted);">/ 5000m</span></div>
         </div>

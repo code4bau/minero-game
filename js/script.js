@@ -299,9 +299,9 @@ class Miner {
         ctx.fillRect(-6 * s, -10 * s, 4 * s, 10 * s); ctx.fillRect(2 * s, -10 * s, 4 * s, 10 * s);
 
         ctx.fillStyle = BIOMAS_CONFIG[biomaActual].colorCore; ctx.fillRect(-6 * s, -5 * s, 4 * s, 2 * s); ctx.fillRect(2 * s, -5 * s, 4 * s, 2 * s);
-        ctx.fillStyle = '#222'; ctx.beginPath(); ctx.roundRect(-9 * s, -28 * s, 18 * s, 18 * s, 2 * s); ctx.fill();
+        ctx.fillStyle = '#222'; ctx.fillRect(-9 * s, -28 * s, 18 * s, 18 * s);
         ctx.fillStyle = 'var(--primary)'; ctx.fillRect(-2 * s, -22 * s, 4 * s, 6 * s); ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(0, -34 * s, 6 * s, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = BIOMAS_CONFIG[biomaActual].colorCore; ctx.beginPath(); ctx.roundRect(-4 * s, -36 * s, 8 * s, 3.5 * s, 1 * s); ctx.fill(); ctx.restore();
+        ctx.fillStyle = BIOMAS_CONFIG[biomaActual].colorCore; ctx.fillRect(-4 * s, -36 * s, 8 * s, 3.5 * s); ctx.restore();
 
         ctx.save(); const headY = p.y + (-34 * s) + currentBob; let currentLightRadius = this.lightMaxRadius;
         if (biomaActual === 'ABISO') { currentLightRadius *= (0.35 + Math.abs(Math.sin(frameCount * 0.1)) * 0.65); }
@@ -334,8 +334,16 @@ function checkCollision3D(pRef, eRef) {
     return true;
 }
 
-function ejecutarInmersion() {
-    let conf = CAMPANA_MISIONES[levelSelected]; views.briefing.style.display = 'none'; views.hud.style.display = 'block';
+function terminarVideo() {
+    const videoOverlay = document.getElementById('videoContainer');
+    const vid = document.getElementById('introVideo');
+    if (vid) vid.pause();
+    if (videoOverlay) videoOverlay.style.display = 'none';
+    iniciarPartidaReal();
+}
+
+function iniciarPartidaReal() {
+    let conf = CAMPANA_MISIONES[levelSelected]; views.hud.style.display = 'block';
     entityPool.forEach(e => e.active = false);
     globalSpeed = conf.vInicial; distanceTraveled = 0; goldCollected = 0; frameCount = 0; currentLane = 1;
     biomaActual = conf.biomaBase; biomeAlertTimer = 0; adUsedInRun = false;
@@ -344,6 +352,23 @@ function ejecutarInmersion() {
     uiTargetGold.innerText = conf.cuota; uiMaxDist.innerText = `/ ${conf.metaDist}m`;
     player = new Miner(); uiGold.innerText = '0'; uiDist.innerText = '0'; uiGold.style.color = 'var(--text-main)';
     initAtmosphericDust(); currentState = 'PLAYING'; requestAnimationFrame(gameLoop);
+}
+
+function ejecutarInmersion() {
+    views.briefing.style.display = 'none';
+    if (levelSelected === 0 && !sessionStorage.getItem('introPlayed')) {
+        sessionStorage.setItem('introPlayed', 'true');
+        const videoOverlay = document.getElementById('videoContainer');
+        const vid = document.getElementById('introVideo');
+        if (videoOverlay && vid) {
+            videoOverlay.style.display = 'flex';
+            vid.src = '../assets/PRESENTACION_DEEPCAVERN.mp4';
+            vid.play().catch(() => terminarVideo());
+            vid.onended = terminarVideo;
+            return;
+        }
+    }
+    iniciarPartidaReal();
 }
 
 function reintentarMisionActual() { views.gameover.style.display = 'none'; ejecutarInmersion(); }
